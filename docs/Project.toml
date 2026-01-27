@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+IntervalsObservers = "326151ce-ff1d-434b-9756-642973270fb4"
+
+[sources]
+IntervalsObservers = {path = ".."}

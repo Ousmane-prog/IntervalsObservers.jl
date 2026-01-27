@@ -1,0 +1,13 @@
+name = "IntervalsObservers"
+uuid = "326151ce-ff1d-434b-9756-642973270fb4"
+authors = ["ousmane-prog <ousmane-junior.sane@etu.univ-amu.fr>"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.12.2"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
