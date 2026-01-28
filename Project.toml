@@ -1,9 +1,27 @@
 name = "IntervalsObservers"
 uuid = "326151ce-ff1d-434b-9756-642973270fb4"
-authors = ["ousmane-prog <ousmane-junior.sane@etu.univ-amu.fr>"]
 version = "1.0.0-DEV"
+authors = ["ousmane-prog <ousmane-junior.sane@etu.univ-amu.fr>"]
+
+[deps]
+CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
+ControlSystems = "a6e380b2-a6ca-5380-bf3e-84a91bcd477e"
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
 [compat]
+CTBase = "0.17.4"
+ControlSystems = "1.15.2"
+DifferentialEquations = "7.17.0"
+DocStringExtensions = "0.9.5"
+JuliaFormatter = "2.2.0"
+LinearAlgebra = "1.12.0"
+OrdinaryDiffEq = "6.106.0"
+Plots = "1.41.4"
 julia = "1.12.2"
 
 [extras]
