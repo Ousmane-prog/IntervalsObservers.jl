@@ -19,7 +19,7 @@ struct LinearSystem{T<:Real}
         M = compute_observability_matrix(A, C, n)
         observable = rank(M) == n
         
-        # Check if system is positive (Metzler A and non-negative C)
+        # Check if system is positive 
         is_metzler = all(A[i, j] >= 0 || i == j for i in 1:n, j in 1:n)
         C_positive = all(C .>= 0)
 
@@ -39,7 +39,7 @@ function compute_observability_matrix(A::Matrix{T}, C::Vector{T}, n::Int) where 
     
     # Subsequent rows: 
     CA = C_row
-    for i in 2:n
+    @inbounds for i in 2:n
         CA = CA * A
         M[i, :] = CA
     end
@@ -48,85 +48,68 @@ function compute_observability_matrix(A::Matrix{T}, C::Vector{T}, n::Int) where 
 end
 
 
-is_observable(sys::LinearSystem) = sys.observable
 
+function positive_interval_gain(sys::LinearSystem)
+    sys.positive || error("interval observers require a positive system")
 
-function observer_gain(sys::LinearSystem; Q = I)
-    sys.observable || error("System is not observable — observer gain does not exist")
-    
-    A = sys.A
-    C = reshape(sys.C, 1, sys.n)
-
-    # Solve dual Riccati equation
-    P = care(A', C', Q, 1.0)
-    K = -(P*C')
-    
-    # Return as vector
-    return vec(K)
-end
-
-
-function state_observer(sys::LinearSystem; Q = I(sys.n))
-    K = observer_gain(sys; Q=Q)
-
-    C_row = reshape(sys.C, 1, sys.n)
-    A_obs = sys.A - K * C_row  # Note: (A - KC) not (A + KC)
-    B_obs = K
-
-    return A_obs, B_obs, K
-end
-
-function upper_observer(sys::LinearSystem; Q = I)
-    sys.observable || error("System is not observable — observer does not exist")
-    sys.positive || @warn "System is not positive - upper observer may not guarantee bounds"
-    
-    # Compute gain using CARE
-    K = observer_gain(sys; Q=Q)
-    
-    # Upper observer matrices
-    C_row = reshape(sys.C, 1, sys.n)
-    A_upper = sys.A - K * C_row
-    B_upper = K
-    
-    # Check if A_upper is Metzler (required for monotone system)
     n = sys.n
-    is_metzler = all(A_upper[i, j] >= -1e-10 || i == j for i in 1:n, j in 1:n)
-    if !is_metzler
-        @warn "Upper observer matrix (A - KC) is not Metzler - bounds may not be guaranteed"
-        println("A_upper = ")
-        display(A_upper)
+    C = sys.C
+
+    K = zeros(n)
+    for i in 1:n
+        if C[i] > 0
+            K[i] = 1.0
+        end 
     end
-    
-    return A_upper, B_upper, K
+    return K
 end
 
 
-function lower_observer(sys::LinearSystem; Q = I)
-    sys.observable || error("System is not observable — observer does not exist")
-    sys.positive || @warn "System is not positive - lower observer may not guarantee bounds"
-    
-    # Compute gain using CARE
-    K = observer_gain(sys; Q=Q)
-    
-    # Lower observer matrices (same structure as upper for symmetric design)
-    C_row = reshape(sys.C, 1, sys.n)
-    A_lower = sys.A - K * C_row
-    B_lower = K
-    
-    # Check if A_lower is Metzler
-    n = sys.n
-    is_metzler = all(A_lower[i, j] >= -1e-10 || i == j for i in 1:n, j in 1:n)
-    if !is_metzler
-        @warn "Lower observer matrix (A - KC) is not Metzler - bounds may not be guaranteed"
-        println("A_lower = ")
-        display(A_lower)
-    end
-    
-    return A_lower, B_lower, K
+
+"""
+    get_state(sol, n::Int)
+
+Extract the true state trajectory `x(t)` from the interval observer solution.
+
+# Arguments
+- `sol`: ODE solution from interval observer simulation
+- `n::Int`: System dimension
+
+# Returns
+- `Matrix`: State trajectory (n×T) where T is the number of time points
+"""
+function get_state(sol, n::Int)
+    return sol[1:n, :]
 end
 
+"""
+    get_lower(sol, n::Int)
 
-function check_metzler(A::Matrix{T}; tol=1e-10) where T<:Real
-    n = size(A, 1)
-    return all(A[i, j] >= -tol || i == j for i in 1:n, j in 1:n)
+Extract the lower bound trajectory `x⁻(t)` from the interval observer solution.
+
+# Arguments
+- `sol`: ODE solution from interval observer simulation
+- `n::Int`: System dimension
+
+# Returns
+- `Matrix`: Lower bound trajectory (n×T) where T is the number of time points
+"""
+function get_lower(sol, n::Int)
+    return sol[n+1:2n, :]
+end
+
+"""
+    get_upper(sol, n::Int)
+
+Extract the upper bound trajectory `x⁺(t)` from the interval observer solution.
+
+# Arguments
+- `sol`: ODE solution from interval observer simulation
+- `n::Int`: System dimension
+
+# Returns
+- `Matrix`: Upper bound trajectory (n×T) where T is the number of time points
+"""
+function get_upper(sol, n::Int)
+    return sol[2n+1:3n, :]
 end
