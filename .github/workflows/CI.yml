@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - master
     tags: ['*']
   pull_request:
   workflow_dispatch:
@@ -66,6 +67,6 @@ jobs:
         shell: julia --project=docs --color=yes {0}
         run: |
           using Documenter: DocMeta, doctest
-          using IntervalsObservers
-          DocMeta.setdocmeta!(IntervalsObservers, :DocTestSetup, :(using IntervalsObservers); recursive=true)
-          doctest(IntervalsObservers)
+          using IntervalObservers
+          DocMeta.setdocmeta!(IntervalObservers, :DocTestSetup, :(using IntervalObservers); recursive=true)
+          doctest(IntervalObservers)

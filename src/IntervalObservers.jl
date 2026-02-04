@@ -1,15 +1,16 @@
 """
-IntervalsObservers module.
+IntervalObservers module.
 
 List of exported functions:
 
 """
 
 
-module IntervalsObservers
+module IntervalObservers
 
 using DocStringExtensions
 
+include("exceptions.jl")
 include("nonlinear/system.jl")
 include("linear/system.jl")
 include("linear/simulation.jl")
@@ -24,5 +25,8 @@ export LinearSystem,
        solve, 
        get_state,
        get_upper, 
-       get_lower
+       get_lower,
+       IntervalObserversError,
+       validate_system_dimensions, 
+       DimensionMismatchError
 end 

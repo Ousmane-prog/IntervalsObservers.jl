@@ -21,20 +21,3 @@ end
 
 
 
-# # Innovation terms
-#     innov_l = y - Cxu  # y - Cᵀx⁺
-#     innov_u = y - Cxl  # y - Cᵀx⁻
-    
-#     # Compute derivatives using mul! for in-place matrix-vector multiplication
-#     mul!(dx, A, x)      # dx = Ax
-#     mul!(dxl, A, xl)    # dxl = Axl (will add innovation next)
-#     mul!(dxu, A, xu)    # dxu = Axu (will add innovation next)
-    
-#     # Add innovation terms: dxl += K*innov_l, dxu += K*innov_u
-#     @inbounds @simd for i in 1:n
-#         dxl[i] += K[i] * innov_l
-#         dxu[i] += K[i] * innov_u
-#     end
-    
-#     return nothing
-# end

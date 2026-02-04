@@ -28,7 +28,7 @@ sys = LinearSystem(A, C)
  
 tspan = (0.0, 3.0)
 
-sol = IntervalsObservers.solve(
+sol = IntervalObservers.solve(
     sys, x0, xl0, xu0,
     tspan
 )

@@ -7,24 +7,22 @@ struct LinearSystem{T<:Real}
     C::Vector{T}
     n::Int
     observable::Bool
-    positive::Bool
+    is_metzler::Bool
 
     function LinearSystem(A::Matrix{T}, C::Vector{T}) where T<:Real
-        n, p = size(A)
-        n == p || error("A must be square matrix, got $(size(A))")
-        
-        length(C) == n || error("C length must match A dimensions, got A: $(size(A)), C length: $(length(C))")
+        # n, p = size(A)
+        # n == p || error("A must be square matrix, got $(size(A))")
+        n = validate_system_dimensions(A, C)
         
         # Check observability criterion: rank([C; CA; CA²; ...; CA^(n-1)]) = n
         M = compute_observability_matrix(A, C, n)
-        observable = rank(M) == n
+        check_observability(M, n)
         
-        # Check if system is positive 
-        is_metzler = all(A[i, j] >= 0 || i == j for i in 1:n, j in 1:n)
-        C_positive = all(C .>= 0)
+        observable = true
+        check_Metzler_Matrix(A)
+        is_metzler = true
 
-        positive = is_metzler && C_positive
-        new{T}(A, C, n, observable, positive)
+        new{T}(A, C, n, observable, is_metzler)
     end 
 end
 
@@ -42,6 +40,7 @@ function compute_observability_matrix(A::Matrix{T}, C::Vector{T}, n::Int) where 
     @inbounds for i in 2:n
         CA = CA * A
         M[i, :] = CA
+        # @info M[i, :]
     end
     
     return M
@@ -50,7 +49,7 @@ end
 
 
 function positive_interval_gain(sys::LinearSystem)
-    sys.positive || error("interval observers require a positive system")
+    # sys.positive || error("interval observers require a positive system")
 
     n = sys.n
     C = sys.C
@@ -58,7 +57,8 @@ function positive_interval_gain(sys::LinearSystem)
     K = zeros(n)
     for i in 1:n
         if C[i] > 0
-            K[i] = 1.0
+            # K[i] = 1.0
+            K[i] = 0
         end 
     end
     return K

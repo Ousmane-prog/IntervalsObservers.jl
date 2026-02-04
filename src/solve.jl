@@ -10,11 +10,13 @@ function solve(
     solver = Tsit5()
 )
     n = sys.n
-    sys.positive || error("interval observers require a positive system")
-    all(xl0 .<= x0 .<= xu0) || error("Initial conditions must satisfy x⁻₀ ≤ x₀ ≤ x⁺₀")
+    A = sys.A
+    C = sys.C
+    check_Metzler_Matrix(A)
+    validate_initial_bounds(x0, xl0, xu0)
 
     K = positive_interval_gain(sys)
-    z0 = vcat(x0, xl0, xu0)
+    z0 = vcat(x0, xu0, xl0)
     p = (sys.A, sys.C, K, n)
 
     prob = ODEProblem(Linear_syst_int_obs_ode!, z0, tspan, p)
