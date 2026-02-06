@@ -94,7 +94,7 @@ Extract the lower bound trajectory `x⁻(t)` from the interval observer solution
 # Returns
 - `Matrix`: Lower bound trajectory (n×T) where T is the number of time points
 """
-function get_lower(sol, n::Int)
+function get_upper(sol, n::Int)
     return sol[n+1:2n, :]
 end
 
@@ -110,6 +110,6 @@ Extract the upper bound trajectory `x⁺(t)` from the interval observer solution
 # Returns
 - `Matrix`: Upper bound trajectory (n×T) where T is the number of time points
 """
-function get_upper(sol, n::Int)
+function get_lower(sol, n::Int)
     return sol[2n+1:3n, :]
 end
