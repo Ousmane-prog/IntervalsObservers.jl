@@ -1,14 +1,14 @@
-using IntervalsObservers
+using IntervalObservers
 using Documenter
 
-DocMeta.setdocmeta!(IntervalsObservers, :DocTestSetup, :(using IntervalsObservers); recursive=true)
+DocMeta.setdocmeta!(IntervalObservers, :DocTestSetup, :(using IntervalObservers); recursive=true)
 
 makedocs(;
-    modules=[IntervalsObservers],
+    modules=[IntervalObservers],
     authors="ousmane-prog <ousmane-junior.sane@etu.univ-amu.fr>",
-    sitename="IntervalsObservers.jl",
+    sitename="IntervalObservers.jl",
     format=Documenter.HTML(;
-        canonical="https://ousmane-prog.github.io/IntervalsObservers.jl",
+        canonical="https://ousmane-prog.github.io/IntervalObservers.jl",
         edit_link="main",
         assets=String[],
     ),
@@ -18,6 +18,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/ousmane-prog/IntervalsObservers.jl",
+    repo="github.com/ousmane-prog/IntervalObservers.jl",
     devbranch="main",
 )
