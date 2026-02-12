@@ -93,7 +93,7 @@ end
     validate_initial_bounds(x0::Vector, xl0::Vector, xu0::Vector)
 Throws DimensionMismatchError when initial bounds don't satisfy x⁻₀ ≤ x₀ ≤ x⁺₀.
 """
-function validate_initial_bounds(x0::Vector, xl0::Vector, xu0::Vector)
+function validate_initial_bounds(x0::Vector, xl0::Vector, xu0::Vector; kwargs...)
     n = length(x0)
 
     if length(xl0) != n || length(xu0) != n 
@@ -126,7 +126,7 @@ struct DimensionMismatchError <: IntervalObserversError
     msg::String
 end
 
-function validate_system_dimensions(A::Matrix, C::Vector)
+function validate_system_dimensions(A::Matrix, C::Vector; kwargs...)
     n, p = size(A)
 
     if n != p 
@@ -140,6 +140,16 @@ function validate_system_dimensions(A::Matrix, C::Vector)
             "C lenght ($(length(C))) must match A dimensions ($(n), $(n))"
         ))
     end 
+
+    for (key, value) in kwargs
+        if key == :state_names
+            if length(value) != n
+                throw(DimensionMismatchError(
+                    "state_names length ($(length(value))) must match A dimensions ($(n), $(n))"
+                ))
+            end
+        end
+    end
     return n 
 end
 

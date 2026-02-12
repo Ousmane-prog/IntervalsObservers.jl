@@ -16,6 +16,7 @@ include("linear/system.jl")
 include("linear/simulation.jl")
 # include("linear/interval_observer.jl")
 include("linear/visualization.jl")
+include("IntervalObserversProblem.jl")
 include("solve.jl")
 
 export LinearSystem, 
@@ -28,5 +29,15 @@ export LinearSystem,
        get_lower,
        IntervalObserversError,
        validate_system_dimensions, 
-       DimensionMismatchError
+       DimensionMismatchError, 
+       @def,
+       IntervalObserversProblem
+
+# macro def(exp)
+#        equations = exp.args
+
+#        oip = Dict(equations => equations)
+
+#        return esc(oip)
+# end
 end 
