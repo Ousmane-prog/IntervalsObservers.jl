@@ -1,6 +1,5 @@
 using DifferentialEquations
 
-
 function solve(
     sys::LinearSystem,
     x0 :: Vector,
@@ -23,4 +22,34 @@ function solve(
     sols = DifferentialEquations.solve(prob, solver)
 
     return sols
+end
+
+function solve(
+    obs::IntervalObserver,
+    x0_plus::Vector,
+    x0_minus::Vector,
+    tspan::Tuple{Real, Real},
+    solver = Tsit5()
+)
+    """
+        solve(obs::IntervalObserver, x0_plus, x0_minus, tspan, solver)
+    
+    Solve a nonlinear interval observer problem.
+    
+    # Arguments
+    - `obs::IntervalObserver`: Interval observer with system, gain, and bounding functions
+    - `x0_plus::Vector`: Initial upper bound on state
+    - `x0_minus::Vector`: Initial lower bound on state
+    - `tspan::Tuple`: Time span (t0, tf)
+    - `solver`: ODE solver (default: Tsit5)
+    
+    # Returns
+    - Solution object containing state trajectories
+    """
+    validate_initial_bounds(x0_minus, x0_plus)
+    
+    prob = build_nonlinear_interval_problem(obs, x0_plus, x0_minus, tspan)
+    sol = DifferentialEquations.solve(prob, solver)
+    
+    return sol
 end

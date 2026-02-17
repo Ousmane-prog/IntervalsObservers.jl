@@ -1,26 +1,98 @@
-struct NonLinearSystem{T<:Real} 
+struct NonLinearSystem{T<:Real, F}
     A::Matrix{T}
     C::Vector{T}
-    n::Int 
-    f::Function
+    n::Int
+    obs::Matrix{T}
+    observable::Bool
+    is_metzler::Bool
 
-    function NonLinearSystem(A::Matrix{T}, C::Vector{T}, n::Int, f::Function) where T<:Real
-         n = validate_system_dimensions(A, C)
-        new{T}(A, C, n, f)
+    # f::Vector{F}
+    f_plus::Vector{F}
+    f_minus::Vector{F}
+
+    function NonLinearSystem(
+        A::Matrix{T},
+        C::Vector{T},
+        # f::Vector{F},
+        f_plus::Vector{F},
+        f_minus::Vector{F}
+    ) where {T<:Real, F}
+
+        n = validate_system_dimensions(A, C)
+
+        # Check correct length of nonlinear terms
+        # length(f) == n || error("f must contain $n functions")
+        length(f_plus) == n || error("f_plus must contain $n functions")
+        length(f_minus) == n || error("f_minus must contain $n functions")
+
+        # Observability
+        obs = compute_observability_matrix(A, C, n)
+        observable = true  # (or call your check)
+
+        check_Metzler_Matrix(A)
+        is_metzler = true
+
+        new{T, F}(A, C, n, obs, observable, is_metzler, f_plus, f_minus)
     end
-
 end
 
-macro def(expr)
-   quote
-        let 
-            A, C, f, n 
-            $(esc(expr))
-            NonLinearSystem(
-                A = A,
-                C = C,
-                n = n,
-                f = f)
-        end
-   end
+struct IntervalObserver{T<:Real, Fp, Fm}
+    sys::NonLinearSystem{T}
+    K::Vector{T}
+    f_plus::Fp
+    f_minus::Fm
+end
+
+# function f_plus(sys::NonLinearSystem, t, y)
+#     if sys.p_plus isa Real
+#         return sys.p_plus * sys.f(t, y) 
+#     else
+#         return sys.p_plus .* sys.f(t, y)
+#     end
+# end
+
+# function f_minus(sys::NonLinearSystem, t, y)
+#     if sys.p_minus isa Real
+#         return sys.p_minus * sys.f(t, y) 
+#     else
+#         return sys.p_minus .* sys.f(t, y)
+#     end
+# end
+
+
+function desired_polynomial(roots::Vector{T}) where T
+
+    p = fromroots(roots)
+    coeffs_p = coeffs(p)
+
+    return coeffs_p
+end
+
+
+function observable_canonical_form(sys::NonLinearSystem, P)
+
+    A = sys.A
+
+    NA = P \ (A * P) 
+
+    return NA
+end
+
+
+function interval_observer_gain(sys::NonLinearSystem, roots::Vector)
+
+    n = sys.n
+    A = sys.A
+
+    P = positive_interval_gain(sys)
+    NA = observable_canonical_form(sys, P)
+   
+    rho = coeffs(fromroots(roots))
+
+    # Ensure correct length
+    rho = rho[1:n]
+
+    G = P * (-rho .- NA[:, end])
+
+    return G
 end
