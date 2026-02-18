@@ -107,3 +107,21 @@ Extract the lower bound trajectory `x⁻(t)` from a nonlinear interval observer 
 function get_lower_nonlinear(sol, n::Int)
     return sol[n+1:2n, :]
 end
+
+
+function positive_interval_gain(sys::Union{LinearSystem, NonLinearSystem})
+    # sys.positive || error("interval observers require a positive system")
+
+    n = sys.n
+    C = sys.C
+
+    K = zeros(n)
+    for i in 1:n
+        if C[i] > 0
+            K[i] = 0.1
+            # K[i] = 0
+        end 
+    end
+    return K
+end
+

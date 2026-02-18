@@ -42,7 +42,8 @@ export LinearSystem,
        interval_observer_gain,
        evaluate_f,
        get_upper_nonlinear,
-       get_lower_nonlinear
+       get_lower_nonlinear, 
+       positive_interval_gain
        
 
 # macro def(exp)

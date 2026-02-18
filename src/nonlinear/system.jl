@@ -5,15 +5,12 @@ struct NonLinearSystem{T<:Real, F}
     obs::Matrix{T}
     observable::Bool
     is_metzler::Bool
-
-    # f::Vector{F}
     f_plus::Vector{F}
     f_minus::Vector{F}
 
     function NonLinearSystem(
         A::Matrix{T},
         C::Vector{T},
-        # f::Vector{F},
         f_plus::Vector{F},
         f_minus::Vector{F}
     ) where {T<:Real, F}
@@ -27,7 +24,7 @@ struct NonLinearSystem{T<:Real, F}
 
         # Observability
         obs = compute_observability_matrix(A, C, n)
-        observable = true  # (or call your check)
+        observable = true
 
         check_Metzler_Matrix(A)
         is_metzler = true
@@ -42,6 +39,7 @@ struct IntervalObserver{T<:Real, Fp, Fm}
     f_plus::Fp
     f_minus::Fm
 end
+
 
 # function f_plus(sys::NonLinearSystem, t, y)
 #     if sys.p_plus isa Real

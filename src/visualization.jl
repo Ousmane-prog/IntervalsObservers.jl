@@ -65,9 +65,19 @@ function plot_nonlinear_state_intervals(sol, obs::IntervalObserver)
     sys = obs.sys
     n = sys.n
     t = sol.t
-
-    xl = get_lower_nonlinear(sol, n)
-    xu = get_upper_nonlinear(sol, n)
+    
+    # Detect if true state was tracked based on solution size
+    num_states = size(sol, 1)  # Number of rows in solution
+    track_true_state = (num_states == 3*n)
+    
+    if track_true_state
+        x = get_state(sol, n)
+        xl = get_lower(sol, n)
+        xu = get_upper(sol, n)
+    else
+        xl = get_lower_nonlinear(sol, n)
+        xu = get_upper_nonlinear(sol, n)
+    end
 
     plt = plot(layout = (n, 1), size=(800, 250*n))
 
@@ -80,6 +90,17 @@ function plot_nonlinear_state_intervals(sol, obs::IntervalObserver)
             color = :red,
             lw = 1.5
         )
+        
+        # Plot true state if available
+        if track_true_state
+            plot!(
+                plt[i], 
+                t, x[i, :],
+                label = "x_$i",
+                lw = 2,
+                color = :black
+            )
+        end
 
         plot!(
             plt[i], 
@@ -102,6 +123,11 @@ function plot_nonlinear_state_intervals(sol, obs::IntervalObserver)
         # grid!(plt[i], true, alpha=0.3)
     end 
     xlabel!(plt[end], "time (s)")
-    title!(plt, "Nonlinear Interval Observer State Bounds", subplot=1)
+    
+    title_text = track_true_state ? 
+        "Nonlinear Interval Observer with True State" :
+        "Nonlinear Interval Observer State Bounds"
+    title!(plt, title_text, subplot=1)
+    
     return plt
 end

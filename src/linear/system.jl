@@ -48,21 +48,21 @@ end
 
 
 
-function positive_interval_gain(sys::LinearSystem)
-    # sys.positive || error("interval observers require a positive system")
+# function positive_interval_gain(sys::Union{LinearSystem, NonLinearSystem})
+#     # sys.positive || error("interval observers require a positive system")
 
-    n = sys.n
-    C = sys.C
+#     n = sys.n
+#     C = sys.C
 
-    K = zeros(n)
-    for i in 1:n
-        if C[i] > 0
-            # K[i] = 1.0
-            K[i] = 0
-        end 
-    end
-    return K
-end
+#     K = zeros(n)
+#     for i in 1:n
+#         if C[i] > 0
+#             # K[i] = 1.0
+#             K[i] = 0
+#         end 
+#     end
+#     return K
+# end
 
 
 
