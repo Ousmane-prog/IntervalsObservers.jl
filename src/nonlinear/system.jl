@@ -41,23 +41,6 @@ struct IntervalObserver{T<:Real, Fp, Fm}
 end
 
 
-# function f_plus(sys::NonLinearSystem, t, y)
-#     if sys.p_plus isa Real
-#         return sys.p_plus * sys.f(t, y) 
-#     else
-#         return sys.p_plus .* sys.f(t, y)
-#     end
-# end
-
-# function f_minus(sys::NonLinearSystem, t, y)
-#     if sys.p_minus isa Real
-#         return sys.p_minus * sys.f(t, y) 
-#     else
-#         return sys.p_minus .* sys.f(t, y)
-#     end
-# end
-
-
 function desired_polynomial(roots::Vector{T}) where T
 
     p = fromroots(roots)

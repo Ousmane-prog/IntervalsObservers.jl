@@ -57,19 +57,19 @@ obs = IntervalObserver(sys, K, f_plus, f_minus)
 sol_observer = IntervalObservers.solve(obs, x0_plus, x0_minus, tspan)
 
 # Plot the observer-only results
-# plt1 = plot_nonlinear_state_intervals(sol_observer, obs)
-# display(plt1)
+plt1 = plot_nonlinear_state_intervals(sol_observer, obs)
+display(plt1)
 
 # println("\nObserver-only solution computed successfully!")
 # println("State dimension: ", sys.n)
 # println("Time span: ", tspan)
 
 # Example 2: Solve WITH true initial state (for comparison with true trajectory)
-x0 = [0.1; 0.2; 0.3]
-sol_with_x0 = IntervalObservers.solve(obs, x0_plus, x0_minus, tspan; x0=x0)
+# x0 = [0.1; 0.2; 0.3]
+# sol_with_x0 = IntervalObservers.solve(obs, x0_plus, x0_minus, tspan; x0=x0)
 
-# Plot with true state
-plt2 = plot_nonlinear_state_intervals(sol_with_x0, obs)
-display(plt2)
+# # Plot with true state
+# plt2 = plot_nonlinear_state_intervals(sol_with_x0, obs)
+# display(plt2)
 
-println("\nSolution with true initial state computed successfully!")
+# println("\nSolution with true initial state computed successfully!")
