@@ -11,12 +11,13 @@ using IntervalObservers
         xl0 = [0.8, 0.3]
         xu0 = [1.2, 0.7]
         tspan = (0.0, 1.0)
-
+        K = positive_interval_gain(sys)
         sol = IntervalObservers.solve(
             sys,
             x0,
             xl0,
             xu0,
+            K,
             tspan
         )
 

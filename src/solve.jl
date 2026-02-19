@@ -5,6 +5,7 @@ function solve(
     x0 :: Vector,
     xl0:: Vector,
     xu0::Vector,
+    K::Union{Nothing, Vector},
     tspan:: Tuple{Real, Real},
     solver = Tsit5()
 )
@@ -14,7 +15,6 @@ function solve(
     check_Metzler_Matrix(A)
     validate_initial_bounds(x0, xl0)
 
-    K = positive_interval_gain(sys)
     z0 = vcat(x0, xu0, xl0)
     p = (sys.A, sys.C, K, n)
 
@@ -25,7 +25,7 @@ function solve(
 end
 
 function solve(
-    obs::IntervalObserver,
+    oip::IntervalObserver,
     x0_plus::Vector,
     x0_minus::Vector,
     tspan::Tuple{Real, Real};
@@ -33,12 +33,12 @@ function solve(
     solver = Tsit5()
 )
     """
-        solve(obs::IntervalObserver, x0_plus, x0_minus, tspan; x0=nothing, solver)
+        solve(oip::IntervalObserver, x0_plus, x0_minus, tspan; x0=nothing, solver)
     
     Solve a nonlinear interval observer problem.
     
     # Arguments
-    - `obs::IntervalObserver`: Interval observer with system, gain, and bounding functions
+    - `oip::IntervalObserver`: Interval observer with system, gain, and bounding functions
     - `x0_plus::Vector`: Initial upper bound on state
     - `x0_minus::Vector`: Initial lower bound on state
     - `tspan::Tuple`: Time span (t0, tf)
@@ -50,7 +50,7 @@ function solve(
     """
     validate_initial_bounds(x0_minus, x0_plus)
     
-    prob = build_nonlinear_interval_problem(obs, x0_plus, x0_minus, tspan; x0=x0)
+    prob = build_nonlinear_interval_problem(oip, x0_plus, x0_minus, tspan; x0=x0)
     sol = DifferentialEquations.solve(prob, solver)
     
     return sol

@@ -44,13 +44,4 @@ export LinearSystem,
        get_upper_nonlinear,
        get_lower_nonlinear, 
        positive_interval_gain
-       
-
-# macro def(exp)
-#        equations = exp.args
-
-#        oip = Dict(equations => equations)
-
-#        return esc(oip)
-# end
 end 

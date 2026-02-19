@@ -48,9 +48,11 @@
         
         tspan = (0.0, 3.0)
 
+        K = positive_interval_gain(sys)
+        
         sol = IntervalObservers.solve(
             sys, x0, xl0, xu0,
-            tspan
+            K, tspan
         )
 
         plot_state_intervals(sol, sys)
