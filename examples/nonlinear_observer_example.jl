@@ -46,15 +46,17 @@ tspan = (0.0, 15.0)
 
 x0_minus = [0.05; 0.1; 0.15]    
 x0_plus  = [0.15; 0.3; 0.45]    
+x0 = [0.1; 0.2; 0.3]
 
 
 # K = [0.1; 0.1; 0.2]
-K = positive_interval_gain(sys)
+# K = positive_interval_gain(sys)
+K = positive_interval_gain(sys, desired_poles=[-2.0, -4.0, -6.0])
 
 
 
 obs = IntervalObserver(sys, K, f_plus, f_minus)
-sol_observer = IntervalObservers.solve(obs, x0_plus, x0_minus, tspan)
+sol_observer = IntervalObservers.solve(obs, x0_plus, x0_minus, tspan; x0=x0)
 
 # Plot the observer-only results
 plt1 = plot_nonlinear_state_intervals(sol_observer, obs)
@@ -65,7 +67,6 @@ display(plt1)
 # println("Time span: ", tspan)
 
 # Example 2: Solve WITH true initial state (for comparison with true trajectory)
-# x0 = [0.1; 0.2; 0.3]
 # sol_with_x0 = IntervalObservers.solve(obs, x0_plus, x0_minus, tspan; x0=x0)
 
 # # Plot with true state
@@ -73,3 +74,18 @@ display(plt1)
 # display(plt2)
 
 # println("\nSolution with true initial state computed successfully!")
+
+
+# Rédiger un exemple d'observateur non linéaire 
+# pour un système de dimension 3 avec des fonctions 
+# non linéaires dans les termes d'incertitude. 
+# Utiliser des fonctions de type Michaelis-Menten 
+# pour les termes non linéaires. Montrer comment 
+# calculer la matrice de gain de l'observateur et 
+# simuler la solution de l'observateur sur un intervalle 
+# de temps donné. Afficher les résultats à l'aide de graphiques 
+# montrant les intervalles d'état estimés par l'observateur.
+
+
+# Preparer la doc pour les fonctions utilisées dans cet exemple, notamment `positive_interval_gain`, `plot_nonlinear_state_intervals`, et les fonctions d'extraction des trajectoires `get_upper_nonlinear` et `get_lower_nonlinear`. En m'assurant 
+# ntation explique clairement les arguments attendus, les valeurs de retour, et fournit des exemples d'utilisation pour chaque fonction.
