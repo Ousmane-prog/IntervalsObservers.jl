@@ -146,4 +146,48 @@ function check_observability(M::Matrix, n::Int)
 
     return true
 end
+"""
+    NonMonotoneDynamicsError
 
+Thrown when the observer error dynamics matrix is not monotone.
+
+# Fields
+- `msg::String`: Error message
+- `matrix::Matrix`: The problematic dynamics matrix (A - K*C)
+- `non_positive_entries::Vector{Tuple{Int, Int, Float64}}`: Indices and values of non-positive off-diagonal entries
+"""
+struct NonMonotoneDynamicsError <: IntervalObserversError
+    msg::String
+    matrix::Matrix
+    non_positive_entries::Vector{Tuple{Int, Int, Float64}}
+end
+
+"""
+    UnobservableMeasurementError
+
+Thrown when no states are measured (C has no positive entries).
+
+# Fields
+- `msg::String`: Error message
+- `C::Vector`: The measurement vector
+"""
+struct UnobservableMeasurementError <: IntervalObserversError
+    msg::String
+    C::Vector
+end
+
+"""
+    InvalidDesiredPolesError
+
+Thrown when desired poles for pole placement are invalid (e.g., not distinct).
+
+# Fields
+- `msg::String`: Error message
+- `poles::Vector`: The problematic pole vector
+- `issue::String`: Description of the issue (e.g., "repeated poles")
+"""
+struct InvalidDesiredPolesError <: IntervalObserversError
+    msg::String
+    poles::Vector
+    issue::String
+end

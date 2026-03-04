@@ -15,7 +15,6 @@ include("nonlinear/system.jl")
 include("linear/system.jl")
 include("linear/simulation.jl")
 include("nonlinear/simulation.jl")
-# include("linear/interval_observer.jl")
 include("visualization.jl")
 include("IntervalObserversProblem.jl")
 include("solve.jl")
@@ -32,9 +31,14 @@ export LinearSystem,
        get_upper, 
        get_lower,
        IntervalObserversError,
+       NonMetzlerMatrixError,
+       NonObservableSystemError,
+       InvalidInitialBoundsError,
+       DimensionMismatchError,
+       NonMonotoneDynamicsError,
+       UnobservableMeasurementError,
+       InvalidDesiredPolesError,
        validate_system_dimensions, 
-       DimensionMismatchError, 
-       # @def,
        IntervalObserversProblem,
        NonLinearSystem,
        IntervalObserver,
