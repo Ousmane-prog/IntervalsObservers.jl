@@ -47,5 +47,7 @@ export LinearSystem,
        evaluate_f,
        get_upper_nonlinear,
        get_lower_nonlinear, 
-       positive_interval_gain
+       positive_interval_gain, 
+       transform_nonlinearity
+       
 end 

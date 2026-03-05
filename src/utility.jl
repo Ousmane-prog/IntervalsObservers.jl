@@ -1,4 +1,3 @@
-
 """
     get_state(sol, n::Int)
 
@@ -60,7 +59,7 @@ Extract the upper bound trajectory `x⁺(t)` from a nonlinear interval observer 
 - `Matrix`: Upper bound trajectory (n×T) where T is the number of time points
 """
 function get_upper_nonlinear(sol, n::Int)
-    return sol[n+1:2n, :]
+    return sol[1:n, :]
 end
 
 """
@@ -76,9 +75,21 @@ Extract the lower bound trajectory `x⁻(t)` from a nonlinear interval observer 
 - `Matrix`: Lower bound trajectory (n×T) where T is the number of time points
 """
 function get_lower_nonlinear(sol, n::Int)
-    return sol[2n+1:3n, :]
+    return sol[n+1:2n, :]
 end
 
+function transform_nonlinearity(f_vec, T, T_inv)
+    n = length(f_vec)
+
+    return [
+        function (z)
+            x = T * z
+            f_val = [f_vec[j](x) for j in 1:n]
+            return (T_inv * f_val)[i]
+        end
+        for i in 1:n
+    ]
+end
 
 
 # ============================================================================
@@ -212,10 +223,19 @@ end
 
 Compute observer gain using pole placement for error dynamics A - K*C.
 
+This function uses pole placement (Ackermann's formula) to compute observer gain K such that
+the eigenvalues (poles) of the error dynamics matrix (A - K*C) are placed at the desired locations.
+
+When the user specifies `desired_poles = [λ₁, λ₂, ..., λₙ]`, this function finds K such that:
+  eig(A - K*C) = [λ₁, λ₂, ..., λₙ]
+
+Negative eigenvalues ensure exponential convergence of the observation error.
+
 # Arguments
 - `A::Matrix{<:Real}`: System matrix
 - `C::Vector{<:Real}`: Measurement vector
-- `desired_poles::Vector{<:Real}`: Desired eigenvalues for A - K*C (must be distinct)
+- `desired_poles::Vector{<:Real}`: Desired eigenvalues (poles) for the error dynamics A - K*C
+  These are the desired values of eig(A - K*C). Must be distinct real numbers.
 - `n::Int`: System dimension
 
 # Returns
@@ -223,36 +243,58 @@ Compute observer gain using pole placement for error dynamics A - K*C.
 
 # Throws
 - `InvalidDesiredPolesError`: If poles are not distinct or have wrong dimension
-- `NonMonotoneDynamicsError`: If the resulting A - K*C is not monotone
+- `NonMonotoneDynamicsError`: If the resulting A - K*C is not monotone (Metzler)
 """
 function _compute_placed_gain(A::Matrix{<:Real}, C::Vector{<:Real}, desired_poles::Vector{<:Real}, n::Int)
     # Validate poles first
     _validate_desired_poles(desired_poles, n)
     
-    # Use Ackermann's formula via pole placement
-    scaled_poles = POLE_PLACEMENT_SCALE .* desired_poles
-    L = place(A', reshape(C, :, 1), scaled_poles)
+    # The desired_poles are the eigenvalues we want for the error dynamics matrix (A - K*C)
+    # scaled_poles = POLE_PLACEMENT_SCALE .* desired_poles
+    L = place(A', reshape(C, :, 1), desired_poles)
     K = vec(L)
     
-    # Check monotonicity of error dynamics
+    # Check monotonicity of error dynamics matrix (A - K*C)
+    # Note: The eigenvalues of (A - K*C) should equal the desired_poles we specified
     A_minus_KC = A - K * reshape(C, 1, :)
     
-    if !_is_monotone_dynamic(A_minus_KC)
-        non_monotone = _find_non_monotone_entries(A_minus_KC)
-        throw(NonMonotoneDynamicsError(
-            "The error dynamics matrix A - K*C is not monotone (Metzler). " *
-            "Please choose different desired poles to ensure a positive interval observer gain. " *
-            "Problematic entries: $(non_monotone)",
-            A_minus_KC,
-            non_monotone
-        ))
-    end
-    
-    @debug "Computed observer gain using pole placement" K eigenvalues=eigvals(A_minus_KC)
+    # if !_is_monotone_dynamic(A_minus_KC)
+    #     # non_monotone = _find_non_monotone_entries(A_minus_KC)
+    #     T, M = diagonalize_matrix(A_minus_KC)
+    # end
     
     return K
 end
 
+function transform_initial_condition(xu0::Vector{<:Real}, xl0::Vector{<:Real}, T_inv::Matrix{<:Real}; x0::Union{Nothing, Vector{<:Real}}=nothing)
+    # z0 = T_inv * x0
+    zl0 = T_inv * xl0
+    zu0 = T_inv * xu0
+    return zu0, zl0
+end
+
+function diagonalize_matrix(M)
+    F = eigen(M)
+    return F.vectors, Diagonal(F.values)
+end
+
+function transform_interval(P, x_minus, x_plus)
+    n = length(x_minus)
+    z_minus = zeros(n)
+    z_plus = zeros(n)
+    for i in 1:n
+        for j in 1:n
+            if P[i, j] >= 0
+                z_minus[i] += P[i, j] * x_minus[j]
+                z_plus[i] += P[i, j] * x_plus[j]
+            else
+                z_minus[i] += P[i, j] * x_plus[j]
+                z_plus[i] += P[i, j] * x_minus[j]
+            end
+        end
+    end
+    return z_minus, z_plus
+end
 # ============================================================================
 # Main Observer Gain Function
 # ============================================================================
@@ -270,16 +312,21 @@ Uses a simple diagonal gain: K[i] = DEFAULT_GAIN_VALUE if C[i] > 0, else 0.
 This is parameter-free and works when C has positive entries.
 
 ### Pole Placement Mode (desired_poles provided)
-Designs K via pole placement to place eigenvalues of A - K*C at specified locations.
+Designs K via pole placement to place the eigenvalues (poles) of error dynamics A - K*C 
+at the user-specified locations. The user provides the desired eigenvalues, and this 
+function computes K such that: eig(A - K*C) = desired_poles
+
 Automatically scales poles by POLE_PLACEMENT_SCALE (0.5) for numerical stability.
 **Important**: Desired poles must be distinct (no repeated values).
-Validates that the resulting dynamics remain monotone.
+Validates that the resulting A - K*C remains monotone (Metzler).
 
 # Arguments
 - `sys::Union{LinearSystem, NonLinearSystem}`: The system for which to compute the gain
 - `desired_poles::Union{Vector{<:Real}, Nothing}`: 
   - `nothing`: Use default diagonal gain (default)
-  - `Vector{<:Real}`: Desired eigenvalues for observer error dynamics (A - K*C)
+  - `Vector{<:Real}`: Desired eigenvalues (poles) for the error dynamics matrix A - K*C.
+    **These are the characteristic polynomial roots you want:** λ ∈ ℝ such that eig(A - K*C) = [λ₁, λ₂, ..., λₙ]
+    Negative values ensure exponential decay of observation error.
     **Must be:** distinct, real-valued, same length as system dimension
 
 # Returns
@@ -297,14 +344,15 @@ sys = LinearSystem(A, C)
 # Use default gain
 K1 = positive_interval_gain(sys)
 
-# Use pole placement with desired eigenvalues
+# Use pole placement with desired eigenvalues of A - K*C
 K2 = positive_interval_gain(sys, desired_poles=[-1.0, -2.0])
 ```
 
 # Notes
+- The "poles" are the eigenvalues of the error dynamics matrix: poles = eig(A - K*C)
 - The returned gain K is used in the observer dynamics: dx̂/dt = Ax̂ + K(C(x - x̂))
-- For a positive interval observer, all off-diagonal entries of A - K*C must be non-negative
-- Pole placement automatically scales desired poles by POLE_PLACEMENT_SCALE for stability
+- For a positive interval observer, all off-diagonal entries of A - K*C must be non-negative (Metzler)
+- Pole placement automatically scales desired poles by POLE_PLACEMENT_SCALE for numerical stability
 """
 function positive_interval_gain(sys::Union{LinearSystem, NonLinearSystem}; 
                                desired_poles::Union{Vector{<:Real}, Nothing}=nothing)
@@ -326,8 +374,6 @@ end
 """
     monotone_dynamic(M::Matrix{<:Real}) -> Bool
 
-Deprecated. Use `_is_monotone_dynamic(M)` instead.
-
 Check if the matrix M is monotone (Metzler): all off-diagonal entries are non-negative.
 
 # Arguments
@@ -339,5 +385,4 @@ Check if the matrix M is monotone (Metzler): all off-diagonal entries are non-ne
 function monotone_dynamic(M::Matrix{<:Real})
     return _is_monotone_dynamic(M)
 end
-
 

@@ -1,6 +1,13 @@
 *.jl.*.cov
 *.jl.cov
 *.jl.mem
+*.tex
+*.pb.gz
 /Manifest*.toml
 /docs/Manifest*.toml
 /docs/build/
+docs/*.sh
+docs/src/*.md
+TheComponents/
+*.md
+# gitignore

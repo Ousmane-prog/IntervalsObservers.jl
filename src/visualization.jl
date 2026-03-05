@@ -50,26 +50,26 @@ end
 
 
 """
-    plot_nonlinear_state_intervals(sol, obs::IntervalObserver)
+    plot_nonlinear_state_intervals(sol, sys)
 
 Plot state interval bounds for a nonlinear interval observer solution.
 
 # Arguments
 - `sol`: Solution from solver
-- `obs::IntervalObserver`: Interval observer containing the system information
+- `sys::Union{LinearSystem, NonLinearSystem}`: System information
 
 # Returns
 - Plot object with subplots for each state dimension
 """
-function plot_nonlinear_state_intervals(sol, obs::IntervalObserver)
-    sys = obs.sys
+function plot_nonlinear_state_intervals(sol, sys)
+    # sys = obs.sys
     n = sys.n
     t = sol.t
     
     # Detect if true state was tracked based on solution size
     num_states = size(sol, 1)  # Number of rows in solution
     track_true_state = (num_states == 3*n)
-    
+    println("Number of states in solution: ", num_states)
     if track_true_state
         x = get_state(sol, n)
         xl = get_lower(sol, n)
@@ -78,7 +78,7 @@ function plot_nonlinear_state_intervals(sol, obs::IntervalObserver)
         xl = get_lower_nonlinear(sol, n)
         xu = get_upper_nonlinear(sol, n)
     end
-
+    println("Plotting state intervals. Tracking true state: ", track_true_state)
     plt = plot(layout = (n, 1), size=(800, 250*n))
 
     for i in 1:n

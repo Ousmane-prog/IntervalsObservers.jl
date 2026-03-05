@@ -55,11 +55,12 @@ K = positive_interval_gain(sys, desired_poles=[-2.0, -4.0, -6.0])
 
 
 
-obs = IntervalObserver(sys, K, f_plus, f_minus)
-sol_observer = IntervalObservers.solve(obs, x0_plus, x0_minus, tspan; x0=x0)
+# obs = IntervalObserver(sys, K, f_plus, f_minus)
+sol_observer = IntervalObservers.solve(sys, K, f_plus, f_minus, x0_plus, x0_minus, tspan; x0=x0)
+
 
 # Plot the observer-only results
-plt1 = plot_nonlinear_state_intervals(sol_observer, obs)
+plt1 = plot_nonlinear_state_intervals(sol_observer, sys)
 display(plt1)
 
 # println("\nObserver-only solution computed successfully!")

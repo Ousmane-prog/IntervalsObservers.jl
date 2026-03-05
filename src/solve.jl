@@ -25,33 +25,46 @@ function solve(
 end
 
 function solve(
-    oip::IntervalObserver,
+    sys::NonLinearSystem,
+    K::Vector,
+    f_plus::Vector,
+    f_minus::Vector,
     x0_plus::Vector,
     x0_minus::Vector,
     tspan::Tuple{Real, Real};
     x0::Union{Nothing, Vector} = nothing,
     solver = Tsit5()
 )
-    """
-        solve(oip::IntervalObserver, x0_plus, x0_minus, tspan; x0=nothing, solver)
-    
-    Solve a nonlinear interval observer problem.
-    
-    # Arguments
-    - `oip::IntervalObserver`: Interval observer with system, gain, and bounding functions
-    - `x0_plus::Vector`: Initial upper bound on state
-    - `x0_minus::Vector`: Initial lower bound on state
-    - `tspan::Tuple`: Time span (t0, tf)
-    - `x0::Vector` (optional): Initial true state (if available)
-    - `solver`: ODE solver (default: Tsit5)
-    
-    # Returns
-    - Solution object containing state trajectories
-    """
+
+    A = sys.A
+    C = sys.C
+    A_minus_KC = A - K * reshape(C, 1, :)
     validate_initial_bounds(x0_minus, x0_plus)
+    if monotone_dynamic(A_minus_KC)
+
+        obs = IntervalObserver(sys, K, f_plus, f_minus)
+        prob = build_nonlinear_interval_problem(
+            obs, x0_plus, x0_minus, tspan; x0=x0
+        )
+        prob = build_nonlinear_interval_problem(obs, x0_minus, x0_plus, tspan; x0=x0) 
+    else 
+
+        F = eigen(A_minus_KC)
+        T = F.vectors
+        T_inv = inv(T)
+        # x0_plus_new = transform_initial_condition(x0_plus, x0_minus, T_inv)
+        z0_minus, z0_plus = transform_interval(T_inv, x0_minus, x0_plus)
+        
+        x0_new = nothing
+        if x0 !== nothing
+            z0 = T_inv * x0
+        end
+
+        obs = IntervalObserver(sys, K, f_plus, f_minus)
+        prob = build_nonlinear_interval_problem(obs, z0_plus, z0_minus, tspan; x0=x0_new)
+    end  
     
-    prob = build_nonlinear_interval_problem(oip, x0_plus, x0_minus, tspan; x0=x0)
     sol = DifferentialEquations.solve(prob, solver)
-    
+
     return sol
 end
