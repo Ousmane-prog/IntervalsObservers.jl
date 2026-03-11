@@ -78,20 +78,14 @@ function get_lower_nonlinear(sol, n::Int)
     return sol[n+1:2n, :]
 end
 
-function transform_nonlinearity(f_vec, T, T_inv)
+function transform_function_vector(f_vec::Vector, M::AbstractMatrix)
     n = length(f_vec)
 
     return [
-        function (z)
-            x = T * z
-            f_val = [f_vec[j](x) for j in 1:n]
-            return (T_inv * f_val)[i]
-        end
+        (t, y) -> sum(M[i, j] * f_vec[j](t, y) for j in 1:n)
         for i in 1:n
     ]
 end
-
-
 # ============================================================================
 # Observer Gain Constants
 # ============================================================================
@@ -266,10 +260,41 @@ function _compute_placed_gain(A::Matrix{<:Real}, C::Vector{<:Real}, desired_pole
     return K
 end
 
-function transform_initial_condition(xu0::Vector{<:Real}, xl0::Vector{<:Real}, T_inv::Matrix{<:Real}; x0::Union{Nothing, Vector{<:Real}}=nothing)
+"""
+    diagonalizing_change_of_basis(A, C, K)
+
+Compute the change of basis matrix M such that M(A - K*C)M⁻¹ is diagonal.
+
+retruns
+   M         : the change of basis matrix
+   M_inv     : the inverse of the change of basis matrix
+   D         : the diagonal matrix of eigenvalues
+"""
+function diagonalizing_change_of_basis(A, C, K)
+    A_minus_KC = A - K * reshape(C, 1, :)
+    F = eigen(A_minus_KC)
+    V = F.vectors
+    D = Diagonal(F.values)
+    M_inv = V 
+    M = inv(V)
+    return M, M_inv, D    
+end
+
+
+function transform_system(A, C, f, M)
+    M_inv = inv(M)
+    A_new = M * A * M_inv
+    C_new = vec(C * M_inv)
+end
+
+function transform_initial_condition(xu0::Vector{<:Real}, xl0::Vector{<:Real}, M::Matrix{<:Real})
     # z0 = T_inv * x0
-    zl0 = T_inv * xl0
-    zu0 = T_inv * xu0
+    zl0 = M * xl0
+    zu0 = M * xu0
+    if x0 !== nothing
+        z0 = M * x0
+        return z0, zl0, zu0
+    end
     return zu0, zl0
 end
 

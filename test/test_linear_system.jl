@@ -116,12 +116,14 @@ end
 
 
         # K = [0.1; 0.1; 0.2]
-        K = positive_interval_gain(sys)
+        K = positive_interval_gain(sys, desired_poles = [-1.0, -2.0, -3.0])
         @test length(K) == sys.n
         # @test K == [0.0; 0.0; 0.1]
 
-        obs = IntervalObserver(sys, K, f_plus, f_minus)
-        sol = IntervalObservers.solve(obs, x0_plus, x0_minus, tspan)
+        sol = IntervalObservers.solve(sys, K, f_plus, f_minus, x0_plus, x0_minus, tspan)
+        
+        @test sol.t[1] == tspan[1]
+        @test sol.t[end] ≈ tspan[2]
     end
 end 
 

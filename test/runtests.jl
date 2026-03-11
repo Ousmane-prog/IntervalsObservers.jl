@@ -6,4 +6,5 @@ using LinearAlgebra
     # Write your tests here.
     include("test_linear_system.jl")
     include("test_utilis.jl")
+    include("test_nonlinear_system.jl")
 end

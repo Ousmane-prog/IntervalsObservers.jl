@@ -42,16 +42,14 @@ f_minus = [
 ]
 
 sys = NonLinearSystem(A, C, f_plus, f_minus)
-tspan = (0.0, 15.0)
+tspan = (0.0, 3.0)
 
 x0_minus = [0.05; 0.1; 0.15]    
 x0_plus  = [0.15; 0.3; 0.45]    
 x0 = [0.1; 0.2; 0.3]
 
 
-# K = [0.1; 0.1; 0.2]
-# K = positive_interval_gain(sys)
-K = positive_interval_gain(sys, desired_poles=[-2.0, -4.0, -6.0])
+K = positive_interval_gain(sys, desired_poles = [-1.0, -2.0, -3.0])
 
 
 
@@ -62,7 +60,6 @@ sol_observer = IntervalObservers.solve(sys, K, f_plus, f_minus, x0_plus, x0_minu
 # Plot the observer-only results
 plt1 = plot_nonlinear_state_intervals(sol_observer, sys)
 display(plt1)
-
 # println("\nObserver-only solution computed successfully!")
 # println("State dimension: ", sys.n)
 # println("Time span: ", tspan)

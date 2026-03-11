@@ -1,29 +1,42 @@
 using IntervalObservers
 using Documenter
 
-DocMeta.setdocmeta!(IntervalObservers, :DocTestSetup, :(using IntervalObservers); recursive=true)
-
-# Build to Hugo static folder for integration with the website
-hugo_static_path = joinpath(@__DIR__, "..", "..", "IntervalObserversWebsite", "static", "api")
-
-makedocs(;
-    modules=[IntervalObservers],
-    authors="ousmane-prog <ousmane-junior.sane@etu.univ-amu.fr>",
-    sitename="IntervalObservers.jl API Documentation",
-    format=Documenter.HTML(;
-        canonical="https://yourdomain.com/api/",
-        edit_link="main",
-        assets=String[],
-    ),
-    pages=[
-        "Home" => "index.md",
-        "Getting Started" => "getting_started.md",
-        "API Reference" => "api.md",
-    ],
-    build=hugo_static_path,
+# For reproducibility
+mkpath(joinpath(@__DIR__, "src", "assets"))
+cp(
+    joinpath(@__DIR__, "Manifest.toml"),
+    joinpath(@__DIR__, "src", "assets", "Manifest.toml");
+    force=true,
+)
+cp(
+    joinpath(@__DIR__, "Project.toml"),
+    joinpath(@__DIR__, "src", "assets", "Project.toml");
+    force=true,
 )
 
-deploydocs(;
-    repo="github.com/ousmane-prog/IntervalObservers.jl",
-    devbranch="main",
+repo = "github.com/ousmane-prog/IntervalObservers.jl.git"
+repo_link = "https://github.com/ousmane-prog/IntervalObservers.jl"
+
+makedocs(
+    modules = [IntervalObservers],
+    authors = "ousmane-prog <ousmane-junior.sane@etu.univ-amu.fr>",
+    sitename = "IntervalObservers.jl",
+    repo = repo_link,
+    format = Documenter.HTML(
+        repolink = repo_link,
+        edit_link = "main",
+        prettyurls = true
+    ),
+    doctest = false,
+    warnonly = [:missing_docs],
+    pages = [
+        "Home" => "index.md",
+        "Nonlinear System Example" => "nonlinear_system_example.md",
+        # "API Reference" => "api.md",
+    ],
+)
+
+deploydocs(
+    repo = repo,
+    devbranch = "main",
 )
