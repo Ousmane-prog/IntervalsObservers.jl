@@ -42,7 +42,7 @@ makedocs(
     doctest = false,
     pages = [
         "Home" => "index.md",
-        # "Getting Started" => "getting_started.md",
+        "Getting Started" => "Getting_started.md",
         "Examples" => generated_pages,
     ],
 )
