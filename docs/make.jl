@@ -1,31 +1,20 @@
 using IntervalObservers
 using Documenter
-using Literate
 
-const EXAMPLES_DIR = joinpath(@__DIR__, "src", "examples")
-const GENERATED_DIR = joinpath(@__DIR__, "src", "generated")
 
-mkpath(GENERATED_DIR)
+mkpath(joinpath(@__DIR__, "src", "assets"))
 
-# Convert every Literate example to markdown
-example_files = sort(filter(f -> endswith(f, ".jl"), readdir(EXAMPLES_DIR)))
+cp(
+    joinpath(@__DIR__, "Manifest.toml"),
+    joinpath(@__DIR__, "src", "assets", "Manifest.toml");
+    force = true,
+)
 
-generated_pages = Pair{String,String}[]
-
-for file in example_files
-    input_path = joinpath(EXAMPLES_DIR, file)
-
-    # Generate markdown into docs/src/generated
-    Literate.markdown(input_path, GENERATED_DIR; execute=true)
-
-    md_file = replace(file, ".jl" => ".md")
-
-    # Turn filename into a readable sidebar title
-    title = replace(replace(file, ".jl" => ""), "_" => " ")
-    title = titlecase(title)
-
-    push!(generated_pages, title => joinpath("generated", md_file))
-end
+cp(
+    joinpath(@__DIR__, "Project.toml"),
+    joinpath(@__DIR__, "src", "assets", "Project.toml");
+    force = true,
+)
 
 repo = "github.com/ousmane-prog/IntervalObservers.jl.git"
 repo_link = "https://github.com/ousmane-prog/IntervalObservers.jl"
@@ -40,10 +29,15 @@ makedocs(
         assets = String[],
     ),
     doctest = false,
+    draft = false,
     pages = [
         "Home" => "index.md",
-        "Getting Started" => "Getting_started.md",
-        "Examples" => generated_pages,
+        "Theory" => "theory.md",
+        "Getting Started" => "getting_started.md",
+        "Applications" => "applications.md",
+        "Examples" => [
+            "Nonlinear System Example" => "nonlinear_system_example.md",
+        ],
     ],
 )
 
