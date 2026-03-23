@@ -31,9 +31,8 @@ makedocs(
     doctest = false,
     draft = false,
     pages = [
-        "Home" => "index.md",
-        "Theory" => "theory.md",
         "Getting Started" => "getting_started.md",
+        "Theory" => "theory.md",
         "Applications" => "applications.md",
         "Examples" => [
             "Nonlinear System Example" => "nonlinear_system_example.md",

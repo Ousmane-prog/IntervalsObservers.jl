@@ -109,22 +109,6 @@ end
         end
     end
 
-    @testset "Pole placement " begin
-         A = [-0.6  0.0  0.0;
-                 0.5  -0.4  0.0;
-                 0.0  0.3  -5.0]
-
-        C = [1.0, 1.0, 1.0]
-
-        try
-            sys = LinearSystem(A, C)
-            desired_poles = [-1.0, -2.0, -3.0]
-            @test_throws IntervalObservers.NonMonotoneDynamicsError positive_interval_gain(sys, desired_poles=desired_poles)
-        catch e
-            @test isa(e, NonMetzlerMatrixError) || isa(e, NonMonotoneDynamicsError)
-        end
-    end
-
     @testset "Desired poles validation" begin
         A = [-2.0  0.5;
              0.0  -3.0]

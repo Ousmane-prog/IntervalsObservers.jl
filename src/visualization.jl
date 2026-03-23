@@ -1,14 +1,14 @@
 using Plots
 
-# Initialize GR backend with appropriate settings for various environments
-try
-    gr()
-    Plots.GR.inline(true)
-    # Set to use agg backend for safer non-interactive rendering
-    Plots.GR.batchmode(false)
-catch
-    # If GR initialization fails, continue with whatever backend is available
-end
+# # Initialize GR backend with appropriate settings for various environments
+# try
+#     gr()
+#     Plots.GR.inline(true)
+#     # Set to use agg backend for safer non-interactive rendering
+#     Plots.GR.batchmode(false)
+# catch
+#     # If GR initialization fails, continue with whatever backend is available
+# end
 
 function plot_state_intervals(sol, sys)
     n = sys.n

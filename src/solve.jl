@@ -177,8 +177,8 @@ function solve(
         println("\n⚠️  CHANGE OF BASIS APPLIED:")
         println("   The system was transformed using: z = M*x")
         println("   where M is the change-of-basis matrix:")
-        println("   M = ")
-        display(M)
+        println("   M = $M")
+        # display(M)
 
         z0 = x0 === nothing ? nothing : M * x0
 

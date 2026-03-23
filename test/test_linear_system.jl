@@ -123,7 +123,7 @@ end
         sol = IntervalObservers.solve(sys, K, f_plus, f_minus, x0_plus, x0_minus, tspan)
         
         @test sol.t[1] == tspan[1]
-        @test sol.t[end] ≈ tspan[2]
+        @test sol.t[end] == tspan[2]
     end
 end 
 
