@@ -173,14 +173,17 @@ function solve(
         M, M_inv, D = diagonalizing_change_of_basis(A, C, K)
 
         # Transform initial interval and exact initial condition using z = Mx
-        z0_minus, z0_plus = transform_interval(M, x0_minus, x0_plus)
+        z0_minus, z0_plus, z0 = transform_interval(M, x0_minus, x0_plus, x0)
         println("\n⚠️  CHANGE OF BASIS APPLIED:")
         println("   The system was transformed using: z = M*x")
         println("   where M is the change-of-basis matrix:")
         println("   M = $M")
         # display(M)
 
-        z0 = x0 === nothing ? nothing : M * x0
+        # z0 = x0 === nothing ? nothing : M * x0
+        println("="^50)
+        println("Transformed interval: z0_minus = ", z0_minus, ", z0_plus = ", z0_plus)
+        println("="^50)
 
         # Transform system
         A_z = M * A * M_inv

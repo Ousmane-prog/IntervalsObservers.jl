@@ -287,38 +287,31 @@ function transform_system(A, C, f, M)
     C_new = vec(C * M_inv)
 end
 
-function transform_initial_condition(xu0::Vector{<:Real}, xl0::Vector{<:Real}, M::Matrix{<:Real})
-    # z0 = T_inv * x0
-    zl0 = M * xl0
-    zu0 = M * xu0
-    if x0 !== nothing
-        z0 = M * x0
-        return z0, zl0, zu0
-    end
-    return zu0, zl0
-end
-
 function diagonalize_matrix(M)
     F = eigen(M)
     return F.vectors, Diagonal(F.values)
 end
 
-function transform_interval(P, x_minus, x_plus)
-    n = length(x_minus)
-    z_minus = zeros(n)
-    z_plus = zeros(n)
-    for i in 1:n
-        for j in 1:n
-            if P[i, j] >= 0
-                z_minus[i] += P[i, j] * x_minus[j]
-                z_plus[i] += P[i, j] * x_plus[j]
-            else
-                z_minus[i] += P[i, j] * x_plus[j]
-                z_plus[i] += P[i, j] * x_minus[j]
-            end
-        end
-    end
-    return z_minus, z_plus
+function transform_interval(P::Matrix{<:Real}, x0_minus::Vector{<:Real}, x0_plus::Vector{<:Real}, x0::Union{Nothing, Vector{<:Real}}=nothing)
+    if x0 !== nothing
+        z0 = P * x0
+    end 
+    # # println("Transforming interval with matrix P:\n", P)
+    # for i in 1:size(P, 1)
+    #     for j in 1:size(P, 2)
+    #         lower_term = min(P[i, j] * x_minus[j], P[i, j] * x_plus[j])
+    #         upper_term = max(P[i, j] * x_minus[j], P[i, j] * x_plus[j])
+    #         z_minus[i] += lower_term
+    #         z_plus[i] += upper_term
+    #     end
+    # end
+    y1 = P * x0_minus
+    y2 = P * x0_plus
+    z_minus = min.(y1, y2)
+    z_plus = max.(y1, y2)
+
+    z0 = x0 === nothing ? nothing : P * x0
+    return z_minus, z_plus, z0
 end
 # ============================================================================
 # Main Observer Gain Function

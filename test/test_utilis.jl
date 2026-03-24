@@ -82,6 +82,18 @@ end
     end
 end
 
+@testset "Interval Transformation" begin
+    P = [2.0 -1.0;
+         -3.0 4.0]
+    x_minus = [1.0, 2.0]
+    x_plus = [3.0, 5.0]
+
+    z_minus, z_plus = IntervalObservers.transform_interval(P, x_minus, x_plus)
+
+    @test z_minus == [-3.0, 5.0]
+    @test z_plus == [4.0, 17.0]
+end
+
 
 @testset "positive_interval_gain" begin
     @testset "Positive Gain" begin

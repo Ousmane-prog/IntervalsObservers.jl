@@ -1,25 +1,3 @@
-# # Nonlinear System Example
-#
-# This example shows how to use `IntervalObservers.jl` for a nonlinear system
-# with interval-bounded uncertainty.
-#
-# ## Problem Setup
-#
-# We consider the nonlinear system
-#
-# ```math
-# \dot{x}(t) = Ax(t) + f(t, x(t)),
-# ```
-#
-# with measured output
-#
-# ```math
-# y(t) = Cx(t).
-# ```
-#
-# The nonlinear term is bounded by lower and upper interval functions
-# $f_{-}(t,x)$ and $f_{+}(t,x)$.
-
 using IntervalObservers
 
 # ## Parameters
@@ -119,10 +97,5 @@ sol_observer = IntervalObservers.solve(
     tspan;
     x0 = x0,
 )
-
-# ## Visualization
-#
-# The following plot shows the true trajectory together with the lower and upper
-# interval estimates.
-
+### Plot the Results
 plot_nonlinear_state_intervals(sol_observer, sys)
