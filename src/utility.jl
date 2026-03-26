@@ -293,30 +293,78 @@ function diagonalize_matrix(M)
 end
 
 
-# function Transform_Coordinates_To_New_Base(P::Matrix{<:Real}, x0_minus::Vector{<:Real}, x0_plus::Vector{<:Real}, x0::Union{Nothing, Vector{<:Real}}=nothing)
-#     y1 = P * x0_minus
-#     y2 = P * x0_plus
-#     z_minus = min.(y1, y2)
-#     z_plus = max.(y1, y2)
+# function transform_interval_bounds(
+#     P::AbstractMatrix,
+#     lower::Union{AbstractMatrix, AbstractVector},
+#     upper::Union{AbstractMatrix, AbstractVector},
+#     state::Union{AbstractMatrix, AbstractVector, Nothing} = nothing
+# )
+#     y_lower_raw = P * lower
+#     y_upper_raw = P * upper
 
-#     z0 = x0 === nothing ? nothing : P * x0
-#     return z_plus, z0,z_minus
+#     y_lower = min.(y_lower_raw, y_upper_raw)
+#     y_upper = max.(y_lower_raw, y_upper_raw)
+
+#     y_state = isnothing(state) ? nothing : P * state
+
+#     return y_lower, y_upper, y_state
 # end
-function transform_interval_bounds(
-    P::AbstractMatrix,
-    lower::Union{AbstractMatrix, AbstractVector},
-    upper::Union{AbstractMatrix, AbstractVector},
-    state::Union{AbstractMatrix, AbstractVector, Nothing} = nothing
+
+function generate_extreme_points(lower::AbstractVector, upper::AbstractVector)
+    function gen(i)
+        if i > 1
+            E1 = gen(i - 1)
+            nb_col1 = size(E1, 2)
+
+            top = vcat(E1, lower[i] .* ones(1, nb_col1))
+            bottom = vcat(E1, upper[i] .* ones(1, nb_col1))
+
+            return hcat(top, bottom)
+        else
+            return reshape([lower[1], upper[1]], 1, 2)
+        end
+    end
+
+    return gen(length(lower))
+end
+
+function compute_bounds_in_new_basis(
+    M::AbstractMatrix,
+    x_minus::Union{AbstractMatrix, AbstractVector},
+    x_plus::Union{AbstractMatrix, AbstractVector},
+    x::Union{AbstractVector, AbstractMatrix, Nothing} = nothing
 )
-    y_lower_raw = P * lower
-    y_upper_raw = P * upper
+    if x_minus isa AbstractVector && x_plus isa AbstractVector
 
-    y_lower = min.(y_lower_raw, y_upper_raw)
-    y_upper = max.(y_lower_raw, y_upper_raw)
+        E = generate_extreme_points(x_minus, x_plus)
+        EZ = M * E
 
-    y_state = isnothing(state) ? nothing : P * state
+        z_minus = vec(minimum(EZ, dims=2))
+        z_plus  = vec(maximum(EZ, dims=2))
+        z       = isnothing(x) ? nothing : M * x
 
-    return y_lower, y_upper, y_state
+        return z_minus, z_plus, z
+    end
+
+    n_out = size(M, 1)
+    n_cols = size(x_minus, 2)
+    z_minus = Matrix{eltype(x_minus)}(undef, n_out, n_cols)
+    z_plus  = Matrix{eltype(x_plus)}(undef, n_out, n_cols)
+    z       = isnothing(x) ? nothing : Matrix{eltype(x)}(undef, n_out, n_cols)
+
+   for k in 1:n_cols
+        E = generate_extreme_points(x_minus[:, k], x_plus[:, k])
+        EZ = M * E
+
+        z_minus[:, k] = vec(minimum(EZ, dims=2))
+        z_plus[:, k]  = vec(maximum(EZ, dims=2))
+
+        if !isnothing(x)
+            z[:, k] = M * x[:, k]
+        end
+    end
+
+    return z_minus, z_plus, z
 end
 # ============================================================================
 # Main Observer Gain Function
