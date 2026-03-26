@@ -155,45 +155,34 @@ function solve(
     x0::Union{Nothing, Vector} = nothing,
     solver = Tsit5()
 )
-
     A = sys.A
     C = sys.C
+    n = sys.n
 
     validate_initial_bounds(x0_minus, x0_plus)
 
     A_minus_KC = A - K * reshape(C, 1, :)
+    transformed = false
 
     if monotone_dynamic(A_minus_KC)
         obs = IntervalObserver(sys, K, f_plus, f_minus)
         prob = build_nonlinear_interval_problem(
-            obs, x0_plus, x0_minus, tspan; x0=x0
+            obs, x0_plus, x0_minus, tspan; x0 = x0
         )
     else
-        # M diagonalizes A-KC in the sense M(A-KC)M^{-1} = D
+        transformed = true
+
+        # Change of coordinates z = Mx
         M, M_inv, D = diagonalizing_change_of_basis(A, C, K)
 
-        # Transform initial interval and exact initial condition using z = Mx
-        z0_minus, z0_plus, z0 = transform_interval(M, x0_minus, x0_plus, x0)
-        println("\n⚠️  CHANGE OF BASIS APPLIED:")
-        println("   The system was transformed using: z = M*x")
-        println("   where M is the change-of-basis matrix:")
-        println("   M = $M")
-        # display(M)
+        z0_minus, z0_plus, z0 = transform_interval_bounds(M, x0_minus, x0_plus, x0)
 
-        # z0 = x0 === nothing ? nothing : M * x0
-        println("="^50)
-        println("Transformed interval: z0_minus = ", z0_minus, ", z0_plus = ", z0_plus)
-        println("="^50)
-
-        # Transform system
         A_z = M * A * M_inv
         C_z = vec((C') * M_inv)
 
-        # Transform nonlinear bounds: f_z(t,y) = M f(t,y)
         f_plus_z  = transform_function_vector(f_plus,  M)
         f_minus_z = transform_function_vector(f_minus, M)
 
-        # Transform observer gain
         K_z = M * K
 
         new_sys = NonLinearSystem(
@@ -204,10 +193,39 @@ function solve(
         obs = IntervalObserver(new_sys, K_z, f_plus_z, f_minus_z)
 
         prob = build_nonlinear_interval_problem(
-            obs, z0_plus, z0_minus, tspan; x0=z0
+            obs, z0_plus, z0_minus, tspan; x0 = z0
         )
     end
 
-    sol = DifferentialEquations.solve(prob, solver)
-    return sol
+    sol_raw = DifferentialEquations.solve(prob, solver)
+    Z = hcat(sol_raw.u...)
+    @show size(Z)
+    @show Z[1:n, 1]
+    @show Z[1:n, end]
+    num_states = size(Z, 1)
+
+    if num_states == 3n
+        state_mid = get_state(Z, n)
+        lower     = get_lower(Z, n)
+        upper     = get_upper(Z, n)
+    elseif num_states == 2n
+        state_mid = nothing
+        upper     = get_upper_nonlinear(Z, n)
+        lower     = get_lower_nonlinear(Z, n)
+    else
+        error("Unexpected state dimension: got $num_states, expected $(2n) or $(3n)")
+    end
+
+    if transformed
+        xl, xu, x_true = transform_interval_bounds(M_inv, lower, upper, state_mid)
+        @show x_true[:, 1]
+        @show x_true[:, end]
+    else
+        xl, xu, x_true = lower, upper, state_mid
+    end
+
+    X = isnothing(x_true) ? vcat(xu, xl) : vcat(x_true, xu, xl)
+    u = [X[:, k] for k in 1:size(X, 2)]
+
+    return (t = sol_raw.t, u = u)
 end

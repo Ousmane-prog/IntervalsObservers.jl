@@ -71,87 +71,140 @@ Plot state interval bounds for a nonlinear interval observer solution.
 # Returns
 - Plot object with subplots for each state dimension
 """
-function plot_nonlinear_state_intervals(sol, sys)
+# function plot_nonlinear_state_intervals(sol, sys)
 
+#     n = sys.n
+#     t = sol.t
+
+#     println("Plotting state intervals for nonlinear observer.")
+
+#     num_states = size(sol,1)
+#     track_true_state = (num_states == 3n)
+
+#     # println("Number of states in solution: ", num_states)
+#     # println("Tracking true state: ", track_true_state)
+
+#     if track_true_state
+#         x  = get_state(sol,n)
+#         xl = get_lower(sol,n)
+#         xu = get_upper(sol,n)
+#     else
+#         xl = get_lower_nonlinear(sol,n)
+#         xu = get_upper_nonlinear(sol,n)
+#     end
+
+#     plt = plot(layout=(n,1), size=(800,250n))
+
+#     for i in 1:n
+
+#         lower = min.(xl[i,:], xu[i,:])
+#         upper = max.(xl[i,:], xu[i,:])
+
+#         # shaded interval
+#         plot!(
+#             plt[i],
+#             t, lower,
+#             fillrange = upper,
+#             fillalpha = 0.2,
+#             color = :lightblue,
+#             label = nothing
+#         )
+
+#         # upper bound
+#         plot!(
+#             plt[i],
+#             t, upper,
+#             ls = :dash,
+#             color = :red,
+#             lw = 1.5,
+#             label = "upper"
+#         )
+
+#         # lower bound
+#         plot!(
+#             plt[i],
+#             t, lower,
+#             ls = :dash,
+#             color = :blue,
+#             lw = 1.5,
+#             label = "lower"
+#         )
+
+#         if track_true_state
+#             plot!(
+#                 plt[i],
+#                 t, x[i,:],
+#                 lw = 2,
+#                 color = :black,
+#                 label = "true"
+#             )
+#         end
+
+#         ylabel!(plt[i], "state $i")
+#     end
+
+#     xlabel!(plt[end], "time (s)")
+
+#     title_text = track_true_state ?
+#         "Nonlinear Interval Observer" :
+#         "Nonlinear Interval Observer Bounds"
+    
+#     # title_text *= "\n[Plot shown in transformed coordinates]"
+    
+#     title!(plt, title_text, subplot=1)
+
+#     return plt
+# end
+
+function plot_nonlinear_state_intervals(sol, sys)
     n = sys.n
     t = sol.t
+    Z = reduce(hcat, sol.u)
 
     println("Plotting state intervals for nonlinear observer.")
 
-    num_states = size(sol,1)
+    num_states = size(Z, 1)
     track_true_state = (num_states == 3n)
 
-    # println("Number of states in solution: ", num_states)
-    # println("Tracking true state: ", track_true_state)
-
     if track_true_state
-        x  = get_state(sol,n)
-        xl = get_lower(sol,n)
-        xu = get_upper(sol,n)
+        x  = get_state(Z, n)
+        xl = get_lower(Z, n)
+        xu = get_upper(Z, n)
     else
-        xl = get_lower_nonlinear(sol,n)
-        xu = get_upper_nonlinear(sol,n)
+        xl = get_lower_nonlinear(Z, n)
+        xu = get_upper_nonlinear(Z, n)
+        x = nothing
     end
 
     plt = plot(layout=(n,1), size=(800,250n))
 
     for i in 1:n
-
         lower = min.(xl[i,:], xu[i,:])
         upper = max.(xl[i,:], xu[i,:])
 
-        # shaded interval
         plot!(
             plt[i],
             t, lower,
-            fillrange = upper,
-            fillalpha = 0.2,
-            color = :lightblue,
-            label = nothing
+            fillrange=upper,
+            fillalpha=0.2,
+            color=:lightblue,
+            label=nothing
         )
 
-        # upper bound
-        plot!(
-            plt[i],
-            t, upper,
-            ls = :dash,
-            color = :red,
-            lw = 1.5,
-            label = "upper"
-        )
-
-        # lower bound
-        plot!(
-            plt[i],
-            t, lower,
-            ls = :dash,
-            color = :blue,
-            lw = 1.5,
-            label = "lower"
-        )
+        plot!(plt[i], t, upper, ls=:dash, color=:red,  lw=1.5, label="upper")
+        plot!(plt[i], t, lower, ls=:dash, color=:blue, lw=1.5, label="lower")
 
         if track_true_state
-            plot!(
-                plt[i],
-                t, x[i,:],
-                lw = 2,
-                color = :black,
-                label = "true"
-            )
+            plot!(plt[i], t, x[i,:], lw=2, color=:black, label="true")
         end
 
         ylabel!(plt[i], "state $i")
     end
 
     xlabel!(plt[end], "time (s)")
-
-    title_text = track_true_state ?
-        "Nonlinear Interval Observer" :
-        "Nonlinear Interval Observer Bounds"
-    
-    # title_text *= "\n[Plot shown in transformed coordinates]"
-    
-    title!(plt, title_text, subplot=1)
+    title!(plt, track_true_state ? "Nonlinear Interval Observer" :
+                                   "Nonlinear Interval Observer Bounds",
+           subplot=1)
 
     return plt
 end

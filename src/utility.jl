@@ -292,26 +292,31 @@ function diagonalize_matrix(M)
     return F.vectors, Diagonal(F.values)
 end
 
-function transform_interval(P::Matrix{<:Real}, x0_minus::Vector{<:Real}, x0_plus::Vector{<:Real}, x0::Union{Nothing, Vector{<:Real}}=nothing)
-    if x0 !== nothing
-        z0 = P * x0
-    end 
-    # # println("Transforming interval with matrix P:\n", P)
-    # for i in 1:size(P, 1)
-    #     for j in 1:size(P, 2)
-    #         lower_term = min(P[i, j] * x_minus[j], P[i, j] * x_plus[j])
-    #         upper_term = max(P[i, j] * x_minus[j], P[i, j] * x_plus[j])
-    #         z_minus[i] += lower_term
-    #         z_plus[i] += upper_term
-    #     end
-    # end
-    y1 = P * x0_minus
-    y2 = P * x0_plus
-    z_minus = min.(y1, y2)
-    z_plus = max.(y1, y2)
 
-    z0 = x0 === nothing ? nothing : P * x0
-    return z_minus, z_plus, z0
+# function Transform_Coordinates_To_New_Base(P::Matrix{<:Real}, x0_minus::Vector{<:Real}, x0_plus::Vector{<:Real}, x0::Union{Nothing, Vector{<:Real}}=nothing)
+#     y1 = P * x0_minus
+#     y2 = P * x0_plus
+#     z_minus = min.(y1, y2)
+#     z_plus = max.(y1, y2)
+
+#     z0 = x0 === nothing ? nothing : P * x0
+#     return z_plus, z0,z_minus
+# end
+function transform_interval_bounds(
+    P::AbstractMatrix,
+    lower::Union{AbstractMatrix, AbstractVector},
+    upper::Union{AbstractMatrix, AbstractVector},
+    state::Union{AbstractMatrix, AbstractVector, Nothing} = nothing
+)
+    y_lower_raw = P * lower
+    y_upper_raw = P * upper
+
+    y_lower = min.(y_lower_raw, y_upper_raw)
+    y_upper = max.(y_lower_raw, y_upper_raw)
+
+    y_state = isnothing(state) ? nothing : P * state
+
+    return y_lower, y_upper, y_state
 end
 # ============================================================================
 # Main Observer Gain Function
