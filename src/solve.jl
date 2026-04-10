@@ -104,6 +104,7 @@ function solve(
     x0_minus::Vector,
     tspan::Tuple{Real, Real};
     x0::Union{Nothing, Vector} = nothing,
+    f_true::Union{Nothing, Vector} = nothing,
     solver = Tsit5()
 )
     A = sys.A
@@ -118,7 +119,7 @@ function solve(
     if monotone_dynamic(A_minus_KC)
         obs = IntervalObserver(sys, K, f_plus, f_minus)
         prob = build_nonlinear_interval_problem(
-            obs, x0_plus, x0_minus, tspan; x0 = x0
+            obs, x0_plus, x0_minus, tspan; x0 = x0, f_true = f_true
         )
     else
         transformed = true
@@ -138,6 +139,7 @@ function solve(
 
         f_plus_z  = transform_function_vector(f_plus,  M)
         f_minus_z = transform_function_vector(f_minus, M)
+        f_true_z  = isnothing(f_true) ? nothing : transform_function_vector(f_true, M)
 
         K_z = M * K
 
@@ -149,7 +151,7 @@ function solve(
         obs = IntervalObserver(new_sys, K_z, f_plus_z, f_minus_z)
 
         prob = build_nonlinear_interval_problem(
-            obs, z0_plus, z0_minus, tspan; x0 = z0
+            obs, z0_plus, z0_minus, tspan; x0 = z0, f_true = f_true_z
         )
     end
 

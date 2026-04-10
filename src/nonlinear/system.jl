@@ -31,6 +31,7 @@ struct NonLinearSystem{T<:Real, F}
         return new{T, F}(A, C, n, obs, observable, is_metzler, f_plus, f_minus, check_metzler)
     end
 end
+
 struct IntervalObserver{T<:Real, Fp, Fm}
     sys::NonLinearSystem{T}
     K::Vector{T}
