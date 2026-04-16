@@ -328,14 +328,15 @@ function generate_extreme_points(lower::AbstractVector, upper::AbstractVector)
     return gen(length(lower))
 end
 
+
 function compute_bounds_in_new_basis(
     M::AbstractMatrix,
-    x_minus::Union{AbstractMatrix, AbstractVector},
-    x_plus::Union{AbstractMatrix, AbstractVector},
+    x_minus::Union{AbstractVector, AbstractMatrix},
+    x_plus::Union{AbstractVector, AbstractMatrix},
     x::Union{AbstractVector, AbstractMatrix, Nothing} = nothing
 )
+    # Single box
     if x_minus isa AbstractVector && x_plus isa AbstractVector
-
         E = generate_extreme_points(x_minus, x_plus)
         EZ = M * E
 
@@ -346,13 +347,19 @@ function compute_bounds_in_new_basis(
         return z_minus, z_plus, z
     end
 
+    # Several boxes stored columnwise
+    @assert x_minus isa AbstractMatrix && x_plus isa AbstractMatrix
+    @assert size(x_minus) == size(x_plus)
+    @assert isnothing(x) || size(x) == size(x_minus)
+
     n_out = size(M, 1)
     n_cols = size(x_minus, 2)
+
     z_minus = Matrix{eltype(x_minus)}(undef, n_out, n_cols)
     z_plus  = Matrix{eltype(x_plus)}(undef, n_out, n_cols)
     z       = isnothing(x) ? nothing : Matrix{eltype(x)}(undef, n_out, n_cols)
 
-   for k in 1:n_cols
+    for k in 1:n_cols
         E = generate_extreme_points(x_minus[:, k], x_plus[:, k])
         EZ = M * E
 

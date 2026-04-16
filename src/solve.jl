@@ -126,14 +126,15 @@ function solve(
 
         # Change of coordinates z = Mx
         M, M_inv, D = diagonalizing_change_of_basis(A, C, K)
-
+        @info "Diagonalizing change of basis matrix M: $M"
+        @info "Inverse of M: $M_inv"
         z0_minus, z0_plus, z0 = compute_bounds_in_new_basis(M, x0_minus, x0_plus, x0)
-        println("= "^20)
-        println("Transformed initial conditions:")
-        println("z0_minus: ", z0_minus)
-        println("z0_plus: ", z0_plus)
-        println("z0: ", z0)
-        println("= "^20)
+        @info "= "^20
+        @info "Transformed initial conditions:"
+        @info "z0_minus: $z0_minus"
+        @info "z0_plus: $z0_plus"
+        @info "z0: $z0"
+        @info "= "^20
         A_z = M * A * M_inv
         C_z = vec((C') * M_inv)
 
@@ -156,6 +157,7 @@ function solve(
     end
 
     sol_raw = DifferentialEquations.solve(prob, solver)
+    @info "Solution obtained sol: $sol_raw with status: $(sol_raw.retcode)"
     Z = hcat(sol_raw.u...)
     @show size(Z)
     @show Z[1:n, 1]
@@ -176,6 +178,8 @@ function solve(
 
     if transformed
         xl, xu, x_true = compute_bounds_in_new_basis(M_inv, lower, upper, state_mid)
+        @info "Transformed bounds:"
+
         @show x_true[:, 1]
         @show x_true[:, end]
     else
