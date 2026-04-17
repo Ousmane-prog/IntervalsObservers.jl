@@ -76,8 +76,9 @@ function solve(
     x0 :: Vector,
     xl0:: Vector,
     xu0::Vector,
-    K::Union{Nothing, Vector},
-    tspan:: Tuple{Real, Real},
+    # K::Union{Nothing, Vector},
+    λ_vals::Tuple{Float64, Float64},
+    tspan:: Tuple{Float64, Float64},
     solver = Tsit5()
 )
     n = sys.n
@@ -102,9 +103,10 @@ function solve(
     f_minus::Vector,
     x0_plus::Vector,
     x0_minus::Vector,
-    tspan::Tuple{Real, Real};
+    tspan::Tuple{Float64, Float64};
     x0::Union{Nothing, Vector} = nothing,
     f_true::Union{Nothing, Vector} = nothing,
+    saveat::Union{Nothing, Real, AbstractVector{<:Real}} = nothing,
     solver = Tsit5()
 )
     A = sys.A
@@ -126,15 +128,15 @@ function solve(
 
         # Change of coordinates z = Mx
         M, M_inv, D = diagonalizing_change_of_basis(A, C, K)
-        @info "Diagonalizing change of basis matrix M: $M"
-        @info "Inverse of M: $M_inv"
+        # @info "Diagonalizing change of basis matrix M: $M"
+        # @info "Inverse of M: $M_inv"
         z0_minus, z0_plus, z0 = compute_bounds_in_new_basis(M, x0_minus, x0_plus, x0)
-        @info "= "^20
-        @info "Transformed initial conditions:"
-        @info "z0_minus: $z0_minus"
-        @info "z0_plus: $z0_plus"
-        @info "z0: $z0"
-        @info "= "^20
+        # @info "= "^20
+        # @info "Transformed initial conditions:"
+        # @info "z0_minus: $z0_minus"
+        # @info "z0_plus: $z0_plus"
+        # @info "z0: $z0"
+        # @info "= "^20
         A_z = M * A * M_inv
         C_z = vec((C') * M_inv)
 
@@ -156,12 +158,14 @@ function solve(
         )
     end
 
-    sol_raw = DifferentialEquations.solve(prob, solver)
-    @info "Solution obtained sol: $sol_raw with status: $(sol_raw.retcode)"
+    sol_raw = isnothing(saveat) ?
+        DifferentialEquations.solve(prob, solver) :
+        DifferentialEquations.solve(prob, solver; saveat = saveat)
+    # @info "Solution obtained sol: $sol_raw with status: $(sol_raw.retcode)"
     Z = hcat(sol_raw.u...)
-    @show size(Z)
-    @show Z[1:n, 1]
-    @show Z[1:n, end]
+    # @show size(Z)
+    # @show Z[1:n, 1]
+    # @show Z[1:n, end]
     num_states = size(Z, 1)
 
     if num_states == 3n
@@ -190,4 +194,59 @@ function solve(
     u = [X[:, k] for k in 1:size(X, 2)]
 
     return (t = sol_raw.t, u = u)
+end
+
+function solve(
+    sys::NonLinearSystem,
+    λ_vals::Tuple{Float64, Float64},
+    f_plus::Vector,
+    f_minus::Vector,
+    x0_plus::Vector,
+    x0_minus::Vector,
+    tspan::Tuple{Float64, Float64};
+    x0::Union{Nothing, Vector} = nothing,
+    f_true::Union{Nothing, Vector} = nothing,
+    δ::Float64 = 0.5,
+    saveat::Union{Nothing, AbstractVector{<:Real}} = nothing,
+    num_saveat::Int = 1001,
+    solver = Tsit5()
+)
+    n = sys.n
+    desired_poles = generate_poles(λ_vals, n; δ = δ)
+
+    @assert num_saveat ≥ 2 "num_saveat must be ≥ 2"
+    common_t = isnothing(saveat) ?
+        collect(range(tspan[1], tspan[2], length = num_saveat)) :
+        collect(Float64.(saveat))
+
+    results = Vector{IntervalObserverSolution}(undef, length(desired_poles))
+
+    Threads.@threads for k in eachindex(desired_poles)
+        poles = desired_poles[k]
+
+        K = positive_interval_gain(sys, desired_poles = poles)
+
+        sol_observer = solve(
+            sys,
+            K,
+            f_plus,
+            f_minus,
+            x0_plus,
+            x0_minus,
+            tspan;
+            x0 = x0,
+            f_true = f_true,
+            saveat = common_t,
+            solver = solver,
+        )
+
+        results[k] = IntervalObserverSolution(
+            sol_observer.t,
+            sol_observer.u;
+            label = "Desired poles: $(poles)",
+            show_true = (k == 1),
+        )
+    end
+
+    return intersect_solutions(results)
 end

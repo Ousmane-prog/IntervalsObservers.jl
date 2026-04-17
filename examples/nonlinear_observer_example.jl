@@ -1,4 +1,6 @@
 using IntervalObservers
+using Plots
+using Base.Threads
 
 # ## Parameters
 # First, define the model parameters.
@@ -74,7 +76,7 @@ f_true = [
 # ## Create the Nonlinear System
 
 sys = NonLinearSystem(A, C, f_plus, f_minus)
-tspan = (0.0, 3.0)
+tspan = (0.0, 20.0)
 
 # ## Initial Conditions
 #
@@ -89,13 +91,80 @@ x0       = [5.0; 10.0; 15.0]
 #
 # Compute the observer gain using desired pole locations.
 
-K = positive_interval_gain(sys, desired_poles = [-1.0, -2.0, -3.0])
+# K = positive_interval_gain(sys, desired_poles = [-1.0, -2.0, -3.0])
+# Compute the observer gain using desired pole locations.
+λ_vals = (-10.0, -1.0)
+# n = size(A, 1)
 
-# ## Solve the Observer Problem
+# let
+#     create_collection = function (λ_vals::Tuple{Float64, Float64}, n::Integer)
+#         λ_min, λ_max = Float64.(λ_vals)
+#         @assert λ_min < 0 "λ_min must be negative for stability"
+#         @assert λ_max < 0 "λ_max must be negative for stability"
+#         @assert λ_min < λ_max "λ_min must be less than λ_max"
 
-sol_observer = IntervalObservers.solve(
+#         return collect(range(λ_min, λ_max; length=n))
+#     end
+
+#     generate_poles_geometric = function (λ::Float64, n::Integer; δ=0.5)
+#         λ_value = Float64(λ)
+#         @assert λ_value < 0 "λ must be negative for stability"
+#         @assert 0 < δ < 1 "δ must be in (0, 1) for distinct poles"
+
+#         return [λ_value * (1 - δ)^k for k in 0:(n - 1)]
+#     end
+
+#     generate_poles = function (λ_vals::Tuple{Float64, Float64}, n::Integer)
+#         pole_collection = create_collection(λ_vals, n)
+#         return [generate_poles_geometric(λ, n) for λ in pole_collection]
+#     end
+
+#     desired_poles = generate_poles(λ_vals, n)
+
+#     plt = nothing
+
+
+#     results = Vector{IntervalObserverSolution}(undef, length(desired_poles))
+
+#     @threads for k in eachindex(desired_poles)
+#         poles = desired_poles[k]
+
+#         K = positive_interval_gain(sys, desired_poles = poles)
+
+#         sol_observer = IntervalObservers.solve(
+#             sys,
+#             K,
+#             f_plus,
+#             f_minus,
+#             x0_plus,
+#             x0_minus,
+#             tspan;
+#             x0 = x0,
+#             f_true = f_true,
+#         )
+
+#         results[k] = IntervalObserverSolution(
+#             sol_observer.t,
+#             sol_observer.u,
+#             label = "Desired poles: $(poles)",
+#             show_true = (k == 1),
+#         )
+#     end
+
+#     plt = plot(results[1], sys)
+
+#     for k in 2:length(results)
+#         plot!(plt, results[k], sys)
+#     end
+#     display(plt)
+#     # output_path = joinpath(@__DIR__, "nonlinear_observer_example.png")
+#     # savefig(plt, output_path)
+#     # println("Saved plot to $(output_path)")
+# end
+
+results = solve(
     sys,
-    K,
+    λ_vals,
     f_plus,
     f_minus,
     x0_plus,
@@ -104,5 +173,11 @@ sol_observer = IntervalObservers.solve(
     x0 = x0,
     f_true = f_true
 )
-### Plot the Results
-plot_nonlinear_state_intervals(sol_observer, sys)
+
+# plt = plot(results[1], sys)
+# for k in 2:length(results)
+#     plot!(plt, results[k], sys)
+# end
+# display(plt)
+
+plot(results, sys)

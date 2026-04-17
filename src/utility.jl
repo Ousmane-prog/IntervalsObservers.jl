@@ -464,3 +464,82 @@ function monotone_dynamic(M::Matrix{<:Real})
     return _is_monotone_dynamic(M)
 end
 
+function create_collection(λ_vals::Tuple{Float64, Float64}, n::Integer)
+    λ_min, λ_max = Float64.(λ_vals)
+    @assert λ_min < 0 "λ_min must be negative for stability"
+    @assert λ_max < 0 "λ_max must be negative for stability"
+    @assert λ_min < λ_max "λ_min must be less than λ_max"
+
+    return collect(range(λ_min, λ_max; length=n))
+end
+
+function generate_poles_geometric(λ::Float64, n::Integer; δ=0.5)
+    @assert λ < 0 "λ must be negative for stability"
+    @assert 0 < δ < 1 "δ must be in (0, 1)"
+
+    return [λ * (1 - δ)^k for k in 0:(n - 1)]
+end
+
+function generate_poles(λ_vals::Tuple{Float64, Float64}, n::Integer; δ=0.5)
+    pole_collection = create_collection(λ_vals, n)
+    return [generate_poles_geometric(λ, n; δ = δ) for λ in pole_collection]
+end
+
+function solution_to_matrix(sol)
+    return reduce(hcat, sol.u)
+end
+
+function intersect_solutions(results::Vector{IntervalObserverSolution})
+    @assert !isempty(results) "Cannot intersect an empty collection of solutions."
+
+    Z0 = solution_to_matrix(results[1])
+    num_states = size(Z0, 1)
+    nt = size(Z0, 2)
+
+    has_true = iszero(num_states % 3)
+
+    if has_true
+        n = num_states ÷ 3
+        x_true = Z0[1:n, :]
+        upper_int = copy(Z0[n+1:2n, :])
+        lower_int = copy(Z0[2n+1:3n, :])
+    else
+        n = num_states ÷ 2
+        x_true = nothing
+        upper_int = copy(Z0[1:n, :])
+        lower_int = copy(Z0[n+1:2n, :])
+    end
+
+    for k in 2:length(results)
+        @assert results[k].t == results[1].t "All solutions must share the same time grid."
+
+        Z = solution_to_matrix(results[k])
+        @assert size(Z, 1) == num_states
+        @assert size(Z, 2) == nt
+
+        if has_true
+            upper_k = Z[n+1:2n, :]
+            lower_k = Z[2n+1:3n, :]
+        else
+            upper_k = Z[1:n, :]
+            lower_k = Z[n+1:2n, :]
+        end
+
+        upper_int .= min.(upper_int, upper_k)
+        lower_int .= max.(lower_int, lower_k)
+    end
+
+    if any(lower_int .> upper_int)
+        @warn "Empty intersection detected for some states/times."
+    end
+
+    X = isnothing(x_true) ? vcat(upper_int, lower_int) : vcat(x_true, upper_int, lower_int)
+    u = [X[:, k] for k in 1:size(X, 2)]
+
+    return IntervalObserverSolution(
+        results[1].t,
+        u,
+        label = "intersection",
+        show_true = true,
+    )
+end

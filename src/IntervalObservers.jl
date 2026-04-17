@@ -22,6 +22,7 @@ include("utility.jl")
 
 export LinearSystem, 
        compute_observability_matrix,
+       IntervalObserverSolution,
        plot_state_intervals,
        plot_nonlinear_state_intervals,
        Linear_syst_int_obs_ode!,
@@ -48,6 +49,12 @@ export LinearSystem,
        get_upper_nonlinear,
        get_lower_nonlinear, 
        positive_interval_gain, 
-       transform_nonlinearity
-       
+       transform_nonlinearity, 
+       generate_extreme_points,
+       compute_bounds_in_new_basis
+       create_collection,
+       generate_poles_geometric,
+       generate_poles,
+       solution_to_matrix,
+       intersect_solutions
 end 
