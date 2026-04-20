@@ -2,6 +2,7 @@ using IntervalObservers
 using Documenter
 
 
+
 mkpath(joinpath(@__DIR__, "src", "assets"))
 
 cp(
@@ -26,6 +27,7 @@ makedocs(
     format = Documenter.HTML(
         repolink = repo_link,
         edit_link = "main",
+        example_size_threshold = 65536,
         assets = String[],
     ),
     doctest = false,
@@ -40,7 +42,9 @@ makedocs(
     ],
 )
 
-deploydocs(
-    repo = repo,
-    devbranch = "main",
-)
+if get(ENV, "CI", "false") == "true"
+    deploydocs(
+        repo = repo,
+        devbranch = "main",
+    )
+end
