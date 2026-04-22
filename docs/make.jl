@@ -35,7 +35,10 @@ makedocs(
     pages = [
         "Getting Started" => "getting_started.md",
         "Theory" => "theory.md",
-        "Applications" => "applications.md",
+        "Applications" => [
+            "Case Study 1" => "applications.md",
+            "Case Study 2" => "applications2.md",
+        ],
         "Examples" => [
             "Nonlinear System Example" => "nonlinear_system_example.md",
         ],
