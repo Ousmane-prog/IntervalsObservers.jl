@@ -23,7 +23,8 @@ struct NonLinearSystem{T<:Real, F}
         length(f_minus) == n || error("f_minus must contain $n functions")
 
         obs = compute_observability_matrix(A, C, n)
-        observable = true
+        # observable = true
+        observable = check_observability_matrix(obs, n)
 
         is_metzler =
             check_metzler ? (check_Metzler_Matrix(A); true) : false
@@ -58,6 +59,12 @@ function observable_canonical_form(sys::NonLinearSystem, P)
     return NA
 end
 
+using LinearAlgebra
+
+function check_observability_matrix(obs, n)
+    rank(obs) == n || error("The pair (A, C) is not observable.")
+    return true
+end
 
 function interval_observer_gain(sys::NonLinearSystem, roots::Vector)
 

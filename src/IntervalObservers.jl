@@ -56,5 +56,9 @@ export LinearSystem,
        generate_poles_geometric,
        generate_poles,
        solution_to_matrix,
-       intersect_solutions
+       intersect_solutions,
+       check_observability_matrix,
+       generate_poles_from_sigma,
+       companion_change_of_basis, 
+       vandermonde_matrix
 end 

@@ -543,3 +543,92 @@ function intersect_solutions(results::Vector{IntervalObserverSolution})
         show_true = true,
     )
 end
+
+function generate_poles_from_sigma(σ::Real, n::Integer)
+    @assert σ > 1 "σ must be greater than 1."
+    return [-σ^i for i in 1:n]
+end
+
+"""
+
+"""
+function companion_change_of_basis(sys::NonLinearSystem)
+    A = sys.A
+    O = sys.obs
+    n = sys.n
+
+    e_n = zeros(eltype(A), n)
+    e_n[end] = one(eltype(A))
+
+    H = O \ e_n
+
+    P = hcat([A^(i-1) * H for i in 1:n]...)
+
+    return P
+end
+
+function vandermonde_matrix(λ::Vector{<:Real})
+    n = length(λ)
+    return [λ[i]^(j-1) for i in 1:n, j in 1:n]
+end
+
+function sigma_change_of_basis(sys::NonLinearSystem, σ::Real)
+    λ = generate_poles_from_sigma(σ, sys.n)
+
+    P = companion_change_of_basis(sys)
+    V = vandermonde_matrix(λ)
+
+    M = V / P
+    M_inv = P / V
+
+    return M, M_inv, λ
+end
+
+# --------------------------------------------------
+# Utilities
+# --------------------------------------------------
+
+function _solve_ode(prob, solver, saveat)
+    return isnothing(saveat) ?
+        DifferentialEquations.solve(prob, solver) :
+        DifferentialEquations.solve(prob, solver; saveat = saveat)
+end
+
+function _extract_solution_blocks(sol_raw, n)
+    Z = hcat(sol_raw.u...)
+    num_states = size(Z, 1)
+
+    if num_states == 3n
+        x_true = get_state(Z, n)
+        lower  = get_lower(Z, n)
+        upper  = get_upper(Z, n)
+    elseif num_states == 2n
+        x_true = nothing
+        upper  = get_upper_nonlinear(Z, n)
+        lower  = get_lower_nonlinear(Z, n)
+    else
+        error("Unexpected state dimension: got $num_states, expected $(2n) or $(3n)")
+    end
+
+    return lower, upper, x_true
+end
+
+function _build_solution(t, lower, upper, x_true; label = "solution", show_true = true)
+    X = isnothing(x_true) ? vcat(upper, lower) : vcat(x_true, upper, lower)
+    u = [X[:, k] for k in 1:size(X, 2)]
+
+    return IntervalObserverSolution(
+        t,
+        u;
+        label = label,
+        show_true = show_true,
+    )
+end
+
+function _common_time_grid(tspan, saveat, num_saveat)
+    @assert num_saveat ≥ 2 "num_saveat must be ≥ 2"
+
+    return isnothing(saveat) ?
+        collect(range(tspan[1], tspan[2]; length = num_saveat)) :
+        collect(Float64.(saveat))
+end
