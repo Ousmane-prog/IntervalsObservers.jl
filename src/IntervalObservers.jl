@@ -61,4 +61,4 @@ export LinearSystem,
        generate_poles_from_sigma,
        companion_change_of_basis, 
        vandermonde_matrix
-end 
+end
