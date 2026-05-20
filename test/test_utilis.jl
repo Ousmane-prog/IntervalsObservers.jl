@@ -107,6 +107,21 @@ end
         @test_throws AssertionError IntervalObservers.generate_poles_from_sigma(-2.0, 3)
     end
 
+    @testset "generate_sigma_family" begin
+        sigma_family = IntervalObservers.generate_sigma_family(2.0)
+
+        @test length(sigma_family) == 5
+        @test sigma_family[1] ≈ 1.1
+        @test sigma_family[end] ≈ 2.0
+        @test all(>(1.0), sigma_family)
+
+        @test IntervalObservers.generate_sigma_family(1.05; σ_min = 1.1, num = 3) == [1.05]
+        @test IntervalObservers.generate_sigma_family(1.0) == [1.0]
+        @test IntervalObservers.generate_sigma_family(2.0; σ_min = 1.5, num = 3) ≈ [1.5, 1.75, 2.0]
+        @test_throws AssertionError IntervalObservers.generate_sigma_family(2.0; σ_min = 0.0)
+        @test_throws AssertionError IntervalObservers.generate_sigma_family(2.0; num = 0)
+    end
+
     @testset "create_collection and generate_poles" begin
         λ_vals = (-10.0, -1.0)
 

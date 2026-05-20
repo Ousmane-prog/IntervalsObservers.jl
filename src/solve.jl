@@ -41,7 +41,7 @@ function solve(
     M_inv::Union{Nothing, AbstractMatrix} = nothing,
     label::String = "single observer",
     show_true::Bool = true,
-)
+    )
     A = sys.A
     C = sys.C
     n = sys.n
@@ -49,7 +49,7 @@ function solve(
     validate_initial_bounds(x0_minus, x0_plus)
 
     A_minus_KC = A - K * reshape(C, 1, :)
-
+    
     if isnothing(M)
         transformed = !monotone_dynamic(A_minus_KC)
 
@@ -127,7 +127,7 @@ end
 # 2. Scalar σ: companion/Vandermonde method
 # --------------------------------------------------
 
-function solve(
+function _solve_with_sigma(
     sys::NonLinearSystem,
     σ::Real,
     f_plus::Vector,
@@ -139,7 +139,7 @@ function solve(
     f_true::Union{Nothing, Vector} = nothing,
     saveat::Union{Nothing, Real, AbstractVector{<:Real}} = nothing,
     solver = Tsit5(),
-)
+    )
     M, M_inv, desired_poles = sigma_change_of_basis(sys, σ)
 
     K = positive_interval_gain(
@@ -182,7 +182,7 @@ function solve(
     f_true::Union{Nothing, Vector} = nothing,
     saveat::Union{Nothing, Real, AbstractVector{<:Real}} = nothing,
     solver = Tsit5(),
-)
+    )
     return solve(
         sys,
         λ_vals[1],
@@ -216,7 +216,7 @@ function solve(
     saveat::Union{Nothing, AbstractVector{<:Real}} = nothing,
     num_saveat::Int = 1001,
     solver = Tsit5(),
-)
+    )
     n = sys.n
     desired_poles = generate_poles(λ_vals, n; δ = δ)
     common_t = _common_time_grid(tspan, saveat, num_saveat)
@@ -245,6 +245,67 @@ function solve(
             solver = solver,
             label = "Desired poles: $(poles)",
             show_true = (k == 1),
+        )
+    end
+
+    return intersect_solutions(results)
+end
+
+
+# --------------------------------------------------
+# Scalar σ solve:
+# multi-σ parallel intersection
+# --------------------------------------------------
+
+function solve(
+    sys::NonLinearSystem,
+    σ::Real,
+    f_plus::Vector,
+    f_minus::Vector,
+    x0_plus::Vector,
+    x0_minus::Vector,
+    tspan::Tuple{Float64, Float64};
+    x0::Union{Nothing, Vector} = nothing,
+    f_true::Union{Nothing, Vector} = nothing,
+    σ_min::Float64 = 0.1,
+    num_sigma::Int = 5,
+    saveat::Union{Nothing, Real, AbstractVector{<:Real}} = nothing,
+    num_saveat::Int = 1001,
+    solver = Tsit5(),
+)
+    σ_values = generate_sigma_family(
+        σ;
+        σ_min = σ_min,
+        num = num_sigma,
+    )
+
+    common_t = _common_time_grid(
+        tspan,
+        saveat,
+        num_saveat,
+    )
+
+    results = Vector{IntervalObserverSolution}(
+        undef,
+        length(σ_values),
+    )
+
+    @threads for k in eachindex(σ_values)
+
+        σk = σ_values[k]
+
+        results[k] = _solve_with_sigma(
+            sys,
+            σk,
+            f_plus,
+            f_minus,
+            x0_plus,
+            x0_minus,
+            tspan;
+            x0 = x0,
+            f_true = f_true,
+            saveat = common_t,
+            solver = solver,
         )
     end
 

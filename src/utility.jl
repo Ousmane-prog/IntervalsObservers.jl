@@ -545,7 +545,7 @@ function intersect_solutions(results::Vector{IntervalObserverSolution})
 end
 
 function generate_poles_from_sigma(σ::Real, n::Integer)
-    @assert σ > 1 "σ must be greater than 1."
+    # @assert σ > 1 "σ must be greater than 1."
     return [-σ^i for i in 1:n]
 end
 
@@ -631,4 +631,20 @@ function _common_time_grid(tspan, saveat, num_saveat)
     return isnothing(saveat) ?
         collect(range(tspan[1], tspan[2]; length = num_saveat)) :
         collect(Float64.(saveat))
+end
+
+function generate_sigma_family(
+    σ::Real;
+    σ_min::Float64 = 1.1,
+    num::Int = 5,
+    )
+    σ = Float64(σ)
+    # @assert σ > 1 "σ must be greater than 1."
+    @assert σ_min > 0 "σ_min must be greater than 0."
+    @assert num >= 1 "num must be greater than or equal to 1."
+
+    if σ < σ_min
+        return [σ]
+    end
+    return collect(range(σ_min, σ; length = num))
 end
