@@ -534,7 +534,7 @@ function intersect_solutions(results::Vector{IntervalObserverSolution})
     end
 
     X = isnothing(x_true) ? vcat(upper_int, lower_int) : vcat(x_true, upper_int, lower_int)
-    u = [X[:, k] for k in 1:eachindex(X, 2)]
+    u = [X[:, k] for k in 1:size(X, 2)]
 
     return IntervalObserverSolution(
         results[1].t,
@@ -615,7 +615,7 @@ end
 
 function _build_solution(t, lower, upper, x_true; label = "solution", show_true = true)
     X = isnothing(x_true) ? vcat(upper, lower) : vcat(x_true, upper, lower)
-    u = [X[:, k] for k in 1:eachindex(X, 2)]
+    u = [X[:, k] for k in 1:size(X, 2)]
 
     return IntervalObserverSolution(
         t,

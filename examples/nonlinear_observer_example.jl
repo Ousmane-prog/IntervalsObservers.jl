@@ -91,8 +91,8 @@ x0       = [5.0; 10.0; 15.0]
 
 # K = positive_interval_gain(sys, desired_poles = [-1.0, -2.0, -3.0])
 # Compute the observer gain using desired pole locations.
-# λ_vals = (-10.0, -1.0)
-λ_vals = 2.0
+λ_vals = (-10.0, -1.0)
+# λ_vals = 2.0
 results = solve(
     sys,
     λ_vals,

@@ -21,7 +21,7 @@ repo = "github.com/ousmane-prog/IntervalObservers.jl.git"
 repo_link = "https://github.com/ousmane-prog/IntervalObservers.jl"
 
 makedocs(
-    authors = "ousmane-prog <ousmane-junior.sane@etu.univ-amu.fr>",
+    authors = "ousmane-prog <myboxe2@gmail.com>",
     sitename = "IntervalObservers.jl",
     repo = repo_link,
     format = Documenter.HTML(
@@ -30,6 +30,7 @@ makedocs(
         example_size_threshold = 65536,
         assets = String[],
     ),
+    # plugins = [Bibliography()],
     doctest = false,
     draft = false,
     pages = [
