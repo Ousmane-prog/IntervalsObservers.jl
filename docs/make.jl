@@ -1,6 +1,6 @@
 using IntervalObservers
 using Documenter
-
+using DocumenterCitations
 
 
 mkpath(joinpath(@__DIR__, "src", "assets"))
@@ -17,6 +17,10 @@ cp(
     force = true,
 )
 
+bib = CitationBibliography(
+    joinpath(@__DIR__, "src", "refs.bib");
+    style=:authoryear
+)
 repo = "github.com/ousmane-prog/IntervalObservers.jl.git"
 repo_link = "https://github.com/ousmane-prog/IntervalObservers.jl"
 
@@ -28,9 +32,9 @@ makedocs(
         repolink = repo_link,
         edit_link = "main",
         example_size_threshold = 65536,
-        assets = String[],
+        assets = String["../assets/custom.css"],
     ),
-    # plugins = [Bibliography()],
+    plugins = [bib],
     doctest = false,
     draft = false,
     pages = [

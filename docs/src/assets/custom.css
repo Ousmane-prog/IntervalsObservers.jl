@@ -1,0 +1,123 @@
+body {
+    counter-reset: definition, theorem, lemma, section;
+}
+
+.definition::before {
+    content: "Definition " counter(definition) ": ";
+    font-weight: bold;
+    
+}
+
+.definition {
+    counter-increment: definition;
+    /* border-left: 3px solid #4a90d9; */
+    padding-left: 0.5em 1em;
+    margin: 1em 0;
+    /* background-color: #f8f9fa; */
+}
+
+.definition-cite {
+    display: inline;
+    font-style: italic;
+}
+
+.definition-cite p {
+    display: inline;
+    margin: 0;
+}
+
+.definition-title {
+    font-weight: bold;
+    /* display: block; */
+    margin-right: 0.3em;
+    display: inline;
+}
+
+/* .definition-title::before {
+    content: "Definition " counter(definition);
+} */
+
+.theorem::before {
+    content: "Theorem " counter(theorem) ": ";
+    font-weight: bold;
+    
+}
+
+.theorem {
+    counter-increment: theorem;
+    /* border-left: 3px solid #4a90d9; */
+    padding-left: 0.5em 1em;
+    margin: 1em 0;
+    /* background-color: #f8f9fa; */
+}
+
+.theorem-title {
+    font-weight: bold;
+    /* display: block; */
+    margin-right: 0.3em;
+    display: inline;
+}
+
+.theorem-cite {
+    display: inline;
+    font-style: italic;
+}
+
+.lemma::before {
+    content: "Lemma " counter(lemma) ": ";
+    font-weight: bold;
+    
+}
+
+.lemma {
+    counter-increment: lemma;
+    /* border-left: 3px solid #4a90d9; */
+    padding-left: 0.5em 1em;
+    margin: 1em 0;
+    /* background-color: #f8f9fa; */
+}
+
+.lemma-title {
+    font-weight: bold;
+    /* display: block; */
+    margin-right: 0.3em;
+    display: inline;
+}
+
+.lemma-cite {
+    display: inline;
+    font-style: italic;
+}
+
+.nowrap-list li {
+    white-space: nowrap;
+}
+
+/* Level 2: ## Introduction → "1. Introduction" */
+article h2 {
+    counter-reset: subsection;
+    counter-increment: section;
+}
+
+article h2::before {
+    content: counter(section) ". ";
+}
+
+/* Level 3: ### Title → "1.1. Title" */
+article h3 {
+    counter-reset: subsubsection;
+    counter-increment: subsection;
+}
+
+article h3::before {
+    content: counter(section) "." counter(subsection) ". ";
+}
+
+/* Level 4: #### Title → "1.1.1. Title" */
+article h4 {
+    counter-increment: subsubsection;
+}
+
+article h4::before {
+    content: counter(section) "." counter(subsection) "." counter(subsubsection) ". ";
+}
