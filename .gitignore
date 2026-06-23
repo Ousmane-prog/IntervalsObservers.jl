@@ -11,3 +11,10 @@ docs/src/*.md
 TheComponents/
 *.md
 # gitignore
+docs/build
+Manifest.toml
+astuce.jl
+*.json  
+docs/src/assets/Manifest.toml
+IntervalObserversProblem.jl
+*.png
