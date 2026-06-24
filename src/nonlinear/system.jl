@@ -33,11 +33,9 @@ struct NonLinearSystem{T<:Real, F}
     end
 end
 
-struct IntervalObserver{T<:Real, Fp, Fm}
-    sys::NonLinearSystem{T}
+struct IntervalObserver{T<:Real, F}
+    sys::NonLinearSystem{T, F}
     K::Vector{T}
-    f_plus::Fp
-    f_minus::Fm
 end
 
 

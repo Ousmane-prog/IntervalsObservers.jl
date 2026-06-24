@@ -62,7 +62,7 @@ function solve(
     end
 
     if !transformed
-        obs = IntervalObserver(sys, K, f_plus, f_minus)
+        obs = IntervalObserver(sys, K)
 
         prob = build_nonlinear_interval_problem(
             obs,
@@ -92,7 +92,7 @@ function solve(
             check_metzler = false,
         )
 
-        obs = IntervalObserver(new_sys, K_z, f_plus_z, f_minus_z)
+        obs = IntervalObserver(new_sys, K_z)
 
         prob = build_nonlinear_interval_problem(
             obs,

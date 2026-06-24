@@ -402,6 +402,8 @@ function compute_bounds_in_new_basis(
 
     # Several boxes stored columnwise
     @assert x_minus isa AbstractMatrix && x_plus isa AbstractMatrix
+    x_minus = x_minus::AbstractMatrix
+    x_plus = x_plus::AbstractMatrix
     @assert size(x_minus) == size(x_plus)
     @assert isnothing(x) || size(x) == size(x_minus)
 
@@ -610,7 +612,7 @@ function intersect_solutions(results::Vector{IntervalObserverSolution})
     end
 
     X = isnothing(x_true) ? vcat(upper_int, lower_int) : vcat(x_true, upper_int, lower_int)
-    u = [X[:, k] for k in 1:size(X, 2)]
+    u = [X[:, k] for k in axes(X, 2)]
 
     return IntervalObserverSolution(
         results[1].t,
@@ -715,7 +717,7 @@ Build an IntervalObserverSolution from the given time vector, lower and upper bo
 """
 function _build_solution(t, lower, upper, x_true; label = "solution", show_true = true)
     X = isnothing(x_true) ? vcat(upper, lower) : vcat(x_true, upper, lower)
-    u = [X[:, k] for k in 1:size(X, 2)]
+    u = [X[:, k] for k in axes(X, 2)]
 
     return IntervalObserverSolution(
         t,

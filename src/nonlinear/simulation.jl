@@ -43,8 +43,8 @@ function build_nonlinear_interval_problem(
         f_minus_val = similar(x_minus)
 
         @inbounds for i in 1:n
-            f_plus_val[i]  = obs.f_plus[i](t, y)
-            f_minus_val[i] = obs.f_minus[i](t, y)
+            f_plus_val[i]  = sys.f_plus[i](t, y)
+            f_minus_val[i] = sys.f_minus[i](t, y)
         end
 
         if track_true_state
