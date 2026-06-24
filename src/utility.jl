@@ -623,7 +623,7 @@ function intersect_solutions(results::Vector{IntervalObserverSolution})
 end
 
 function generate_poles_from_sigma(σ::Real, n::Integer)
-    # @assert σ > 1 "σ must be greater than 1."
+    @assert σ > 1 "σ must be greater than 1."
     return [-σ^i for i in 1:n]
 end
 

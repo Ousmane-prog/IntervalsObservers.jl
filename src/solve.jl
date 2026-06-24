@@ -1,6 +1,10 @@
 using DifferentialEquations
 using Base.Threads
 
+# --------------------------------------------------
+# LinearSystem solver: handles linear interval observer ODE
+# --------------------------------------------------
+
 function solve(
     sys::LinearSystem,
     x0::Vector,
@@ -10,14 +14,31 @@ function solve(
     tspan::Tuple{Float64, Float64},
     solver = Tsit5(),
 )
-    return solve(
-        sys,
-        K,
-        x0,
-        xl0,
-        xu0,
-        tspan,
-        solver,
+    n = sys.n
+    
+    # Initial condition state vector: [x; xu; xl]
+    # This order matches the Linear_syst_int_obs_ode! function's view structure
+    z0 = vcat(x0, xu0, xl0)
+    
+    # ODE problem parameters
+    p = (sys.A, sys.C, K, n)
+    
+    # Build and solve ODE problem
+    prob = ODEProblem(Linear_syst_int_obs_ode!, z0, tspan, p)
+    sol_raw = _solve_ode(prob, solver, nothing)
+    
+    # Extract solution blocks: the ODE returns [x; xu; xl]
+    # _extract_solution_blocks expects that layout
+    lower, upper, x_true = _extract_solution_blocks(sol_raw, n)
+    
+    # Build solution object: reconstructs as [x; xu; xl]
+    return _build_solution(
+        sol_raw.t,
+        lower,
+        upper,
+        x_true;
+        label = "linear observer",
+        show_true = true,
     )
 end
 
@@ -267,7 +288,7 @@ function solve(
     tspan::Tuple{Float64, Float64};
     x0::Union{Nothing, Vector} = nothing,
     f_true::Union{Nothing, Vector} = nothing,
-    σ_min::Float64 = 0.1,
+    σ_min::Float64 = 1.1,
     num_sigma::Int = 5,
     saveat::Union{Nothing, Real, AbstractVector{<:Real}} = nothing,
     num_saveat::Int = 1001,

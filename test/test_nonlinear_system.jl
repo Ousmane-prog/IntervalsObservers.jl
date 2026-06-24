@@ -139,6 +139,12 @@
             (t, y) -> -0.1 * y,
         ]
 
+        f_true = [
+            (t, y) -> 0.25 * y / (1.0 + y),
+            (t, y) -> 0.0,
+            (t, y) -> -0.05 * y,
+        ]
+
         sys = NonLinearSystem(A, C, f_plus, f_minus)
 
         x0_minus = [0.05, 0.1, 0.15]
@@ -156,6 +162,7 @@
             x0_minus,
             tspan;
             x0 = x0,
+            f_true = f_true,
         )
 
         @test sol isa IntervalObservers.IntervalObserverSolution
@@ -281,6 +288,12 @@
             (t, y) -> -0.1 * y,
         ]
 
+        f_true = [
+            (t, y) -> 0.25 * y / (1.0 + y),
+            (t, y) -> 0.0,
+            (t, y) -> -0.05 * y,
+        ]
+
         sys = NonLinearSystem(A, C, f_plus, f_minus)
 
         x0_minus = [0.05, 0.1, 0.15]
@@ -298,6 +311,7 @@
             x0_minus,
             tspan;
             x0 = x0,
+            f_true = f_true,
         )
 
         @test sol isa IntervalObservers.IntervalObserverSolution

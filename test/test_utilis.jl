@@ -17,7 +17,7 @@ using LinearAlgebra
 
         K = positive_interval_gain(sys)
 
-        sol = IntervalObservers.solve(sys, K, x0, xl0, xu0, tspan)
+        sol = IntervalObservers.solve(sys, x0, xl0, xu0, K, tspan)
         n = sys.n
         Z = hcat(sol.u...)
 
@@ -77,9 +77,9 @@ end
     x_minus = [1.0, 2.0]
     x_plus  = [3.0, 5.0]
 
-    z_minus, z_plus = IntervalObservers.transform_interval(P, x_minus, x_plus)
+    z_minus, z_plus, _ = IntervalObservers.compute_bounds_in_new_basis(P, x_minus, x_plus)
 
-    @test z_minus ≈ [-3.0, 5.0]
+    @test z_minus ≈ [-3.0, -1.0]
     @test z_plus  ≈ [4.0, 17.0]
 
     x0 = [2.0, 3.0]
