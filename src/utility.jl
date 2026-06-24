@@ -280,13 +280,40 @@ function diagonalizing_change_of_basis(A, C, K)
     return M, M_inv, D    
 end
 
+"""
+    transform_system(A, C, f, M)
 
+Transform the system matrices A, C, and f using the change of basis matrix M.
+
+# Arguments
+- `A`: System matrix
+- `C`: Measurement matrix
+- `f`: Input matrix
+- `M`: Change of basis matrix
+
+# Returns
+- `A_new`: Transformed system matrix
+- `C_new`: Transformed measurement matrix
+- `f_new`: Transformed input matrix
+"""
 function transform_system(A, C, f, M)
     M_inv = inv(M)
     A_new = M * A * M_inv
     C_new = vec(C * M_inv)
 end
 
+"""
+    diagonalize_matrix(M)
+
+Diagonalize the matrix M.
+
+# Arguments
+- `M`: Matrix to diagonalize
+
+# Returns
+- `V`: Matrix of eigenvectors
+- `D`: Diagonal matrix of eigenvalues
+"""
 function diagonalize_matrix(M)
     F = eigen(M)
     return F.vectors, Diagonal(F.values)
@@ -310,6 +337,18 @@ end
 #     return y_lower, y_upper, y_state
 # end
 
+"""
+    generate_extreme_points(lower::AbstractVector, upper::AbstractVector)
+
+Generate the extreme points of a hyperrectangle defined by lower and upper bounds.
+
+# Arguments
+- `lower`: Lower bounds
+- `upper`: Upper bounds
+
+# Returns
+- `E`: Matrix of extreme points
+"""
 function generate_extreme_points(lower::AbstractVector, upper::AbstractVector)
     function gen(i)
         if i > 1
@@ -328,7 +367,21 @@ function generate_extreme_points(lower::AbstractVector, upper::AbstractVector)
     return gen(length(lower))
 end
 
+"""
+    compute_bounds_in_new_basis(M::AbstractMatrix, x_minus::Union{AbstractVector, AbstractMatrix}, x_plus::Union{AbstractVector, AbstractMatrix})
 
+Compute the bounds of the system in the new basis defined by the change of basis matrix M.
+
+# Arguments
+- `M`: Change of basis matrix
+- `x_minus`: Lower bounds in the original basis
+- `x_plus`: Upper bounds in the original basis
+
+# Returns
+- `z_minus`: Lower bounds in the new basis
+- `z_plus`: Upper bounds in the new basis
+- `z`: State vector in the new basis (if provided)
+"""
 function compute_bounds_in_new_basis(
     M::AbstractMatrix,
     x_minus::Union{AbstractVector, AbstractMatrix},
@@ -480,15 +533,38 @@ function generate_poles_geometric(λ::Float64, n::Integer; δ=0.5)
     return [λ * (1 - δ)^k for k in 0:(n - 1)]
 end
 
+"""
+    generate_poles(λ_vals::Tuple{Float64, Float64}, n::Integer; δ=0.5)
+
+Generate a collection of poles based on the given eigenvalue bounds.
+
+# Arguments
+- `λ_vals`: Tuple of lower and upper bounds for the eigenvalues
+- `n`: Number of poles to generate
+- `δ`: Scaling factor for geometric distribution
+
+# Returns
+- `Vector{Float64}`: Generated poles
+"""
 function generate_poles(λ_vals::Tuple{Float64, Float64}, n::Integer; δ=0.5)
     pole_collection = create_collection(λ_vals, n)
     return [generate_poles_geometric(λ, n; δ = δ) for λ in pole_collection]
 end
 
+"""
+    solution_to_matrix(sol)
+
+Convert a solution to a matrix.
+"""
 function solution_to_matrix(sol)
     return reduce(hcat, sol.u)
 end
 
+"""
+    intersect_solutions(results::Vector{IntervalObserverSolution})
+
+Intersect a collection of interval observer solutions.
+"""
 function intersect_solutions(results::Vector{IntervalObserverSolution})
     @assert !isempty(results) "Cannot intersect an empty collection of solutions."
 
@@ -550,7 +626,8 @@ function generate_poles_from_sigma(σ::Real, n::Integer)
 end
 
 """
-
+    companion_change_of_basis(sys::NonLinearSystem)
+Compute the change of basis matrix for a companion form system.
 """
 function companion_change_of_basis(sys::NonLinearSystem)
     A = sys.A
@@ -567,11 +644,22 @@ function companion_change_of_basis(sys::NonLinearSystem)
     return P
 end
 
+"""
+    vandermonde_matrix(λ::Vector{<:Real})
+Construct a Vandermonde matrix from the given vector of eigenvalues λ.
+"""
 function vandermonde_matrix(λ::Vector{<:Real})
     n = length(λ)
     return [λ[i]^(j-1) for i in 1:n, j in 1:n]
 end
 
+"""
+    sigma_change_of_basis(sys::NonLinearSystem, σ::Real)
+Compute the change of basis matrices M and M_inv for a nonlinear 
+system based on a given σ value. This function generates poles from σ,
+constructs the companion change of basis matrix, and computes the Vandermonde 
+matrix to obtain the transformation matrices.
+"""
 function sigma_change_of_basis(sys::NonLinearSystem, σ::Real)
     λ = generate_poles_from_sigma(σ, sys.n)
 
@@ -588,12 +676,20 @@ end
 # Utilities
 # --------------------------------------------------
 
+"""
+    _solve_ode(prob, solver, saveat)
+Solve an ODE problem with the given solver and saveat options.
+"""
 function _solve_ode(prob, solver, saveat)
     return isnothing(saveat) ?
         DifferentialEquations.solve(prob, solver) :
         DifferentialEquations.solve(prob, solver; saveat = saveat)
 end
 
+"""
+    _extract_solution_blocks(sol_raw, n)
+Extract the solution blocks from the raw solution.
+"""
 function _extract_solution_blocks(sol_raw, n)
     Z = hcat(sol_raw.u...)
     num_states = size(Z, 1)
@@ -613,6 +709,10 @@ function _extract_solution_blocks(sol_raw, n)
     return lower, upper, x_true
 end
 
+"""
+    _build_solution(t, lower, upper, x_true; label = "solution", show_true = true)
+Build an IntervalObserverSolution from the given time vector, lower and upper bounds, and true state trajectory.
+"""
 function _build_solution(t, lower, upper, x_true; label = "solution", show_true = true)
     X = isnothing(x_true) ? vcat(upper, lower) : vcat(x_true, upper, lower)
     u = [X[:, k] for k in 1:size(X, 2)]
@@ -625,6 +725,10 @@ function _build_solution(t, lower, upper, x_true; label = "solution", show_true 
     )
 end
 
+"""
+    _common_time_grid(tspan, saveat, num_saveat)
+Generate a common time grid for ODE solutions based on the time span, saveat option, and number of save points.
+"""
 function _common_time_grid(tspan, saveat, num_saveat)
     @assert num_saveat ≥ 2 "num_saveat must be ≥ 2"
 
@@ -633,6 +737,10 @@ function _common_time_grid(tspan, saveat, num_saveat)
         collect(Float64.(saveat))
 end
 
+"""
+    generate_sigma_family(σ::Real; σ_min::Float64 = 1.1, num::Int = 5)
+Generate a family of σ values for observer design, starting from σ_min up to σ.
+"""
 function generate_sigma_family(
     σ::Real;
     σ_min::Float64 = 1.1,
