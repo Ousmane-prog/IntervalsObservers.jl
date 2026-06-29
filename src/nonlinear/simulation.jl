@@ -1,4 +1,33 @@
 using DifferentialEquations
+
+"""
+    build_nonlinear_interval_problem(obs, x0_plus, x0_minus, tspan; x0=nothing, f_true=nothing)
+
+Construct an ODE problem for a nonlinear interval observer system.
+
+Builds the coupled ODE problem for the observer dynamics:
+  ẋxᴶ = A*xᴶ + fᴶ(t,y) + K*(y - C*xᴶ)
+  ẋxᴵ = A*xᴵ + fᴵ(t,y) + K*(y - C*xᴵ)
+
+Optionally tracks the true state when x0 and f_true are provided.
+
+# Arguments
+- `obs::IntervalObserver`: Observer with system and gain
+- `x0_plus::Vector`: Initial upper bound
+- `x0_minus::Vector`: Initial lower bound
+- `tspan::Tuple`: Time span (t0, tf)
+- `x0::Union{Nothing, Vector}`: Initial true state (optional)
+- `f_true::Union{Nothing, Vector}`: True nonlinearity functions for each state (optional)
+
+# Returns
+- `ODEProblem`: ODE problem ready for solving with DifferentialEquations.jl
+
+# Note
+If x0 and f_true are provided, the ODE state includes the true state:
+  z = [x; x_plus; x_minus] (length 3n)
+Otherwise:
+  z = [x_plus; x_minus] (length 2n)
+"""
 function build_nonlinear_interval_problem(
     obs::IntervalObserver,
     x0_plus::Vector,

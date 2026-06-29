@@ -1,7 +1,49 @@
 using LinearAlgebra
 using ControlSystems
 
+"""
+    LinearSystem{T<:Real}
 
+Represents a linear time-invariant system for interval observer design.
+
+A linear system is defined by:
+  ẋ(t) = A*x(t)
+  y(t) = C*x(t)
+
+where:
+- x(t) ∈ ℝⁿ is the system state
+- A ∈ ℝⁿˣⁿ is the system matrix
+- C ∈ ℝ¹ˣⁿ is the measurement vector (must be observable)
+
+The system is automatically validated to ensure:
+- A is a square matrix
+- The system is observable (rank of observability matrix = n)
+- A is a Metzler matrix (positive off-diagonal entries, critical for positive interval observers)
+
+# Fields
+- `A::Matrix{T}`: System matrix (n×n)
+- `C::Vector{T}`: Measurement vector (length n)
+- `n::Int`: System dimension
+- `observable::Bool`: Indicator that the system is observable
+- `is_metzler::Bool`: Indicator that A is Metzler (all off-diagonals are non-negative)
+
+# Constructor
+```julia
+LinearSystem(A::Matrix{<:Real}, C::Vector{<:Real})
+```
+
+# Throws
+- `DimensionMismatchError`: If A is not square or C has incorrect length
+- `NonObservableSystemError`: If the system is not observable
+- `NonMetzlerMatrixError`: If A is not Metzler
+
+# Example
+```julia
+A = [0.0 1.0; -1.0 -0.5]
+C = [1.0, 0.0]
+sys = LinearSystem(A, C)
+```
+"""
 struct LinearSystem{T<:Real}
     A::Matrix{T}
     C::Vector{T}
@@ -27,6 +69,36 @@ struct LinearSystem{T<:Real}
 end
 
 
+"""
+    compute_observability_matrix(A::Matrix{T}, C::Vector{T}, n::Int) where T<:Real
+
+Compute the observability matrix for a linear system.
+
+For a linear system ẋ = Ax, y = Cx, the observability matrix is constructed as:
+
+```
+M = [C; C*A; C*A²; ...; C*A^(n-1)]
+```
+
+The system is observable if and only if rank(M) = n.
+
+# Arguments
+- `A::Matrix{T}`: System matrix (n×n)
+- `C::Vector{T}`: Measurement vector (1×n)
+- `n::Int`: System dimension
+
+# Returns
+- `Matrix{T}`: Observability matrix of size n×n
+
+# Example
+```julia
+A = [0.0 1.0; -1.0 -0.5]
+C = [1.0, 0.0]
+n = 2
+M = compute_observability_matrix(A, C, n)
+rank(M) == n  # Check observability
+```
+"""
 function compute_observability_matrix(A::Matrix{T}, C::Vector{T}, n::Int) where T<:Real
     C_row = reshape(C, 1, n)
     

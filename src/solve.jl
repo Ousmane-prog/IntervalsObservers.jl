@@ -1,10 +1,41 @@
 using DifferentialEquations
 using Base.Threads
 
-# --------------------------------------------------
-# LinearSystem solver: handles linear interval observer ODE
-# --------------------------------------------------
+"""
+    solve(sys::LinearSystem, x0, xl0, xu0, K, tspan, solver=Tsit5())
 
+Solve a linear interval observer problem.
+
+Solves the coupled ODE system:
+  ẋ = A*x
+  ẋ⁺ = A*x⁺ + K*(y - C*x⁻)
+  ẋ⁻ = A*x⁻ + K*(y - C*x⁺)
+
+where y = C*x is the measurement.
+
+# Arguments
+- `sys::LinearSystem`: The linear system
+- `x0::Vector`: Initial state (dimension n)
+- `xl0::Vector`: Initial lower bound estimate (dimension n)
+- `xu0::Vector`: Initial upper bound estimate (dimension n)
+- `K::Vector`: Observer gain (dimension n)
+- `tspan::Tuple{Float64, Float64}`: Time span (t0, tf)
+- `solver`: ODE solver algorithm (default: Tsit5())
+
+# Returns
+- `IntervalObserverSolution`: Solution object containing time history and state estimates
+
+# Example
+```julia
+sys = LinearSystem(A, C)
+x0 = [1.0, 0.0]
+xl0 = [0.8, -0.2]
+xu0 = [1.2, 0.2]
+K = positive_interval_gain(sys)
+sol = solve(sys, x0, xl0, xu0, K, (0.0, 10.0))
+plot(sol)
+```
+"""
 function solve(
     sys::LinearSystem,
     x0::Vector,
@@ -144,10 +175,23 @@ function solve(
     )
 end
 
-# --------------------------------------------------
-# 2. Scalar σ: companion/Vandermonde method
-# --------------------------------------------------
+"""
+    _solve_with_sigma(sys::NonLinearSystem, σ::Real, f_plus::Vector, f_minus::Vector, 
+                      x0_plus::Vector, x0_minus::Vector, tspan; ...)
 
+Internal function to solve with a single sigma parameter.
+
+Uses the sigma-based companion form change of basis to design the observer gain.
+
+# Arguments
+- `sys::NonLinearSystem`: The nonlinear system
+- `σ::Real`: Sigma parameter > 1 (controls pole placement scaling)
+- `f_plus, f_minus, x0_plus, x0_minus, tspan`: See `solve` documentation
+- `x0, f_true, saveat, solver`: Optional parameters
+
+# Returns
+- `IntervalObserverSolution`: Solution for this sigma value
+"""
 function _solve_with_sigma(
     sys::NonLinearSystem,
     σ::Real,
@@ -187,10 +231,21 @@ function _solve_with_sigma(
     )
 end
 
-# --------------------------------------------------
-# 3. One-value tuple: redirect to scalar σ
-# --------------------------------------------------
+"""
+    solve(sys::NonLinearSystem, λ_vals::Tuple{<:Real}, f_plus::Vector, f_minus::Vector, 
+          x0_plus::Vector, x0_minus::Vector, tspan; ...)
 
+Solve nonlinear interval observer with single eigenvalue (one-value tuple).
+
+Redirects to scalar sigma-based solver.
+
+# Arguments
+- `λ_vals::Tuple{<:Real}`: Single-element tuple containing eigenvalue
+- Other arguments: See main `solve` documentation
+
+# Returns
+- `IntervalObserverSolution`: Solution object
+"""
 function solve(
     sys::NonLinearSystem,
     λ_vals::Tuple{<:Real},
@@ -219,10 +274,24 @@ function solve(
     )
 end
 
-# --------------------------------------------------
-# 4. Interval λ_vals: family of observers + intersection
-# --------------------------------------------------
+"""
+    solve(sys::NonLinearSystem, λ_vals::Tuple{<:Real, <:Real}, f_plus::Vector, f_minus::Vector, 
+          x0_plus::Vector, x0_minus::Vector, tspan; δ=0.5, ...)
 
+Solve nonlinear interval observer with eigenvalue interval (two-value tuple).
+
+Generates a family of observer gains with poles distributed in the interval [λ_min, λ_max],
+solves each observer, and returns the intersection of all solutions for improved bounds.
+
+# Arguments
+- `λ_vals::Tuple{<:Real, <:Real}`: (λ_min, λ_max) eigenvalue bounds
+- `δ::Float64`: Geometric distribution parameter (default: 0.5)
+- `num_saveat::Int`: Number of time points (default: 1001)
+- Other arguments: See main `solve` documentation
+
+# Returns
+- `IntervalObserverSolution`: Intersection of all observer solutions
+"""
 function solve(
     sys::NonLinearSystem,
     λ_vals::Tuple{<:Real, <:Real},
@@ -273,11 +342,28 @@ function solve(
 end
 
 
-# --------------------------------------------------
-# Scalar σ solve:
-# multi-σ parallel intersection
-# --------------------------------------------------
+"""
+    solve(sys::NonLinearSystem, σ::Real, f_plus::Vector, f_minus::Vector, 
+          x0_plus::Vector, x0_minus::Vector, tspan; σ_min=1.1, num_sigma=5, ...)
 
+Solve nonlinear interval observer with multi-sigma parallel intersection.
+
+Generates a family of sigma values from σ_min to σ, solves multiple observers
+in parallel, and returns the intersection of all solutions for refined bounds.
+
+# Arguments
+- `σ::Real`: Maximum sigma parameter (must be > 1)
+- `σ_min::Float64`: Minimum sigma parameter (default: 1.1)
+- `num_sigma::Int`: Number of sigma values to try (default: 5)
+- `num_saveat::Int`: Number of output time points (default: 1001)
+- Other arguments: See main `solve` documentation
+
+# Returns
+- `IntervalObserverSolution`: Intersection of all sigma-based observer solutions
+
+# Note
+Solutions are computed in parallel using multiple threads.
+"""
 function solve(
     sys::NonLinearSystem,
     σ::Real,

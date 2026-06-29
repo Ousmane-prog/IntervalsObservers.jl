@@ -2,6 +2,37 @@ using Plots
 import Plots: plot, plot!
 using RecipesBase
 
+"""
+    IntervalObserverSolution
+
+Stores and represents the solution from an interval observer simulation.
+
+Captures the time trajectory and state estimates (upper/lower bounds, and optionally
+the true state) from an interval observer run.
+
+# Fields
+- `t`: Time vector
+- `u`: State solution as a vector of state vectors
+- `label::String`: Description of the observer (e.g., "linear observer")
+- `show_true::Bool`: Whether to display the true state trajectory in plots
+
+# Constructor
+```julia
+IntervalObserverSolution(t, u; label="", show_true=true)
+```
+
+# Plotting
+The solution can be plotted using Julia's `plot()` function:
+```julia
+sol = solve(...)  # Returns IntervalObserverSolution
+plot(sol)
+```
+
+Automatically generates subplots for each state showing:
+- Shaded interval between lower and upper bounds
+- Dashed lines for upper and lower bounds
+- True state trajectory (if available)
+"""
 struct IntervalObserverSolution
     t
     u
@@ -12,10 +43,42 @@ end
 IntervalObserverSolution(t, u; label="", show_true=true) =
     IntervalObserverSolution(t, u, String(label), show_true)
 
+"""
+    plot(sol::IntervalObserverSolution, sys; kwargs...)
+
+Plot the interval observer solution.
+
+Creates a figure with subplots for each state dimension showing:
+- Shaded region between lower and upper bounds
+- Dashed lines indicating bound trajectories
+- True state (if available)
+
+# Arguments
+- `sol::IntervalObserverSolution`: The solution to plot
+- `sys`: System (optional, for display purposes)
+- `kwargs`: Additional plotting options passed to Plots.jl
+
+# Returns
+- `Plot`: Plots.jl figure object
+"""
 function plot(sol::IntervalObserverSolution, sys; kwargs...)
     return plot(sol; kwargs...)
 end
 
+"""
+    plot!(plt::Plots.Plot, sol::IntervalObserverSolution, sys; kwargs...)
+
+Add an interval observer solution to an existing plot.
+
+# Arguments
+- `plt::Plots.Plot`: Existing plot object
+- `sol::IntervalObserverSolution`: Solution to add
+- `sys`: System (optional)
+- `kwargs`: Additional plotting options
+
+# Returns
+- `Plot`: Modified plot object
+"""
 function plot!(plt::Plots.Plot, sol::IntervalObserverSolution, sys; kwargs...)
     return plot!(plt, sol; kwargs...)
 end

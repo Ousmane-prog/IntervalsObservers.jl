@@ -7,7 +7,7 @@
 /docs/Manifest*.toml
 /docs/build/
 docs/*.sh
-docs/src/*.md
+# docs/src/*.md
 TheComponents/
 *.md
 # gitignore

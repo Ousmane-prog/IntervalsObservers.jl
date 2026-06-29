@@ -78,6 +78,21 @@ function get_lower_nonlinear(sol, n::Int)
     return sol[n+1:2n, :]
 end
 
+"""
+    transform_function_vector(f_vec::Vector, M::AbstractMatrix)
+
+Transform a vector of nonlinear functions using a change of basis matrix.
+
+For each state i, creates a new function that applies the change of basis:
+  g_i(t,y) = Σⱼ M[i,j] * f_j(t,y)
+
+# Arguments
+- `f_vec::Vector`: Vector of functions [f₁, f₂, ..., fₙ]
+- `M::AbstractMatrix`: Change of basis matrix
+
+# Returns
+- `Vector`: New functions in the transformed coordinates
+"""
 function transform_function_vector(f_vec::Vector, M::AbstractMatrix)
     n = length(f_vec)
 
@@ -519,6 +534,21 @@ function monotone_dynamic(M::Matrix{<:Real})
     return _is_monotone_dynamic(M)
 end
 
+"""
+    create_collection(λ_vals::Tuple{Float64, Float64}, n::Integer)
+
+Create a collection of eigenvalues uniformly distributed in an interval.
+
+Generates n eigenvalues uniformly spaced between λ_min and λ_max.
+Both bounds must be negative for stability.
+
+# Arguments
+- `λ_vals::Tuple{Float64, Float64}`: (λ_min, λ_max) eigenvalue bounds
+- `n::Integer`: Number of eigenvalues to generate
+
+# Returns
+- `Vector{Float64}`: Eigenvalues distributed in [λ_min, λ_max]
+"""
 function create_collection(λ_vals::Tuple{Float64, Float64}, n::Integer)
     λ_min, λ_max = Float64.(λ_vals)
     @assert λ_min < 0 "λ_min must be negative for stability"
@@ -528,6 +558,22 @@ function create_collection(λ_vals::Tuple{Float64, Float64}, n::Integer)
     return collect(range(λ_min, λ_max; length=n))
 end
 
+"""
+    generate_poles_geometric(λ::Float64, n::Integer; δ=0.5)
+
+Generate geometric series of eigenvalues from a base eigenvalue.
+
+Creates n eigenvalues using geometric progression:
+  poles = [λ, λ(1-δ), λ(1-δ)², ..., λ(1-δ)^(n-1)]
+
+# Arguments
+- `λ::Float64`: Base eigenvalue (must be negative for stability)
+- `n::Integer`: Number of eigenvalues to generate
+- `δ::Float64`: Decay factor in (0,1) (default: 0.5)
+
+# Returns
+- `Vector{Float64}`: Generated eigenvalues
+"""
 function generate_poles_geometric(λ::Float64, n::Integer; δ=0.5)
     @assert λ < 0 "λ must be negative for stability"
     @assert 0 < δ < 1 "δ must be in (0, 1)"
@@ -557,6 +603,15 @@ end
     solution_to_matrix(sol)
 
 Convert a solution to a matrix.
+
+Concatenates solution vectors horizontally to form a matrix where each column
+is a state vector at a time point.
+
+# Arguments
+- `sol`: Solution object with `.u` field containing state vectors
+
+# Returns
+- `Matrix`: Concatenated state vectors (n×T)
 """
 function solution_to_matrix(sol)
     return reduce(hcat, sol.u)
@@ -566,6 +621,19 @@ end
     intersect_solutions(results::Vector{IntervalObserverSolution})
 
 Intersect a collection of interval observer solutions.
+
+Computes the intersection of solution envelopes by taking the minimum of all upper bounds
+and the maximum of all lower bounds across all solutions. This is used when multiple
+observers (with different parameters) are run to refine state bounds.
+
+# Arguments
+- `results::Vector{IntervalObserverSolution}`: Vector of solutions to intersect
+
+# Returns
+- `IntervalObserverSolution`: New solution with tightened bounds (intersection)
+
+# Throws
+- `AssertionError`: If results vector is empty
 """
 function intersect_solutions(results::Vector{IntervalObserverSolution})
     @assert !isempty(results) "Cannot intersect an empty collection of solutions."
@@ -622,6 +690,27 @@ function intersect_solutions(results::Vector{IntervalObserverSolution})
     )
 end
 
+"""
+    generate_poles_from_sigma(σ::Real, n::Integer)
+
+Generate poles from a sigma parameter using exponential scaling.
+
+Creates n poles using the pattern:
+  poles = [-σ¹, -σ², -σ³, ..., -σⁿ]
+
+This creates increasingly negative poles that ensure exponential decay
+of the observer error with different time scales.
+
+# Arguments
+- `σ::Real`: Sigma parameter (must be > 1 for stability)
+- `n::Integer`: System dimension (number of poles to generate)
+
+# Returns
+- `Vector`: Poles [-σ, -σ², ..., -σⁿ]
+
+# Throws
+- `AssertionError`: If σ ≤ 1
+"""
 function generate_poles_from_sigma(σ::Real, n::Integer)
     @assert σ > 1 "σ must be greater than 1."
     return [-σ^i for i in 1:n]
@@ -680,7 +769,18 @@ end
 
 """
     _solve_ode(prob, solver, saveat)
-Solve an ODE problem with the given solver and saveat options.
+
+Internal wrapper to solve an ODE problem.
+
+Handles optional saveat parameter for ODE solving.
+
+# Arguments
+- `prob`: ODEProblem from DifferentialEquations.jl
+- `solver`: ODE solver algorithm
+- `saveat`: Time points to save (nothing for default)
+
+# Returns
+- Solution object from DifferentialEquations.solve()
 """
 function _solve_ode(prob, solver, saveat)
     return isnothing(saveat) ?
@@ -690,7 +790,21 @@ end
 
 """
     _extract_solution_blocks(sol_raw, n)
-Extract the solution blocks from the raw solution.
+
+Extract state blocks from raw ODE solution.
+
+Separates the concatenated state vector [x; xu; xl] or [xu; xl] back into
+individual state components.
+
+# Arguments
+- `sol_raw`: Raw ODE solution from DifferentialEquations.solve
+- `n::Int`: System dimension
+
+# Returns
+- `lower, upper, x_true`: Lower bounds, upper bounds, and true state (if available)
+
+# Note
+Automatically detects whether true state is present based on total dimension.
 """
 function _extract_solution_blocks(sol_raw, n)
     Z = hcat(sol_raw.u...)
@@ -713,7 +827,22 @@ end
 
 """
     _build_solution(t, lower, upper, x_true; label = "solution", show_true = true)
-Build an IntervalObserverSolution from the given time vector, lower and upper bounds, and true state trajectory.
+
+Build an IntervalObserverSolution from solution components.
+
+Combines time, lower bounds, upper bounds, and optionally true state
+into a solution object ready for plotting.
+
+# Arguments
+- `t`: Time vector
+- `lower`: Lower bound trajectories
+- `upper`: Upper bound trajectories
+- `x_true`: True state trajectory (or nothing)
+- `label::String`: Solution label
+- `show_true::Bool`: Whether to show true state in plots
+
+# Returns
+- `IntervalObserverSolution`: Formatted solution object
 """
 function _build_solution(t, lower, upper, x_true; label = "solution", show_true = true)
     X = isnothing(x_true) ? vcat(upper, lower) : vcat(x_true, upper, lower)
@@ -729,7 +858,22 @@ end
 
 """
     _common_time_grid(tspan, saveat, num_saveat)
-Generate a common time grid for ODE solutions based on the time span, saveat option, and number of save points.
+
+Generate a common time grid for ODE solutions.
+
+Creates a uniform time grid for output, either from saveat if provided
+or by generating num_saveat points uniformly in tspan.
+
+# Arguments
+- `tspan`: Time span (t0, tf)
+- `saveat`: Explicit time points (nothing if not provided)
+- `num_saveat::Int`: Number of points to generate if saveat is nothing
+
+# Returns
+- `Vector{Float64}`: Time points for ODE solution output
+
+# Throws
+- `AssertionError`: If num_saveat < 2
 """
 function _common_time_grid(tspan, saveat, num_saveat)
     @assert num_saveat ≥ 2 "num_saveat must be ≥ 2"
@@ -741,7 +885,22 @@ end
 
 """
     generate_sigma_family(σ::Real; σ_min::Float64 = 1.1, num::Int = 5)
-Generate a family of σ values for observer design, starting from σ_min up to σ.
+
+Generate a family of sigma values for multi-observer design.
+
+Creates a sequence of sigma values starting from σ_min up to σ for running multiple
+observers with different pole placement strategies.
+
+# Arguments
+- `σ::Real`: Maximum sigma value
+- `σ_min::Float64`: Minimum sigma value (default: 1.1)
+- `num::Int`: Number of sigma values to generate (default: 5)
+
+# Returns
+- `Vector{Float64}`: Sigma values, or just [σ] if σ < σ_min
+
+# Throws
+- `AssertionError`: If σ_min ≤ 0 or num < 1
 """
 function generate_sigma_family(
     σ::Real;
