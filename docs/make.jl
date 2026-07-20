@@ -21,12 +21,12 @@ bib = CitationBibliography(
     joinpath(@__DIR__, "src", "refs.bib");
     style=:authoryear
 )
-repo = "github.com/ousmane-prog/IntervalObservers.jl.git"
-repo_link = "https://github.com/ousmane-prog/IntervalObservers.jl"
+repo = "github.com/Ousmane-prog/IntervalsObservers.jl.git"
+repo_link = "https://github.com/Ousmane-prog/IntervalsObservers.jl"
 
 makedocs(
-    authors = "ousmane-prog <myboxe2@gmail.com>",
-    sitename = "IntervalObservers.jl",
+    authors = "Ousmane-prog <myboxe2@gmail.com>",
+    sitename = "IntervalsObservers.jl",
     repo = repo_link,
     format = Documenter.HTML(
         repolink = repo_link,
