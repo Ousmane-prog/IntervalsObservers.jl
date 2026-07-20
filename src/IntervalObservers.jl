@@ -49,7 +49,7 @@ export LinearSystem,
        get_upper_nonlinear,
        get_lower_nonlinear, 
        positive_interval_gain, 
-       transform_nonlinearity, 
+       transform_nonlinearity,    
        generate_extreme_points,
        compute_bounds_in_new_basis
        create_collection,

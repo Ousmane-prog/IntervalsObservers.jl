@@ -1,6 +1,6 @@
 using IntervalObservers
 using Plots
-using Base.Threads
+# using Base.Threads
 
 # ## Parameters
 # First, define the model parameters.
@@ -20,6 +20,7 @@ b = 20.0
 # Construct the system matrix `A` and output matrix `C`.
 
 β₁ = α₁ + m1
+
 β₂ = α₂ + m2
 β₃ = m3
 
@@ -104,5 +105,5 @@ results = solve(
     x0 = x0,
     f_true = f_true
 )
-
+println(results)
 plot(results)

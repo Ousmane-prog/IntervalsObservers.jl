@@ -37,6 +37,8 @@ makedocs(
     plugins = [bib],
     doctest = false,
     draft = false,
+    checkdocs = :exports,
+    warnonly = [:autodocs_block],
     pages = [
         "Getting Started" => "getting_started.md",
         "Theory" => "theory.md",
@@ -47,6 +49,7 @@ makedocs(
         "Examples" => [
             "Nonlinear System Example" => "nonlinear_system_example.md",
         ],
+        "API Reference" => "api.md",
     ],
 )
 
