@@ -77,14 +77,15 @@ end
 """
     IntervalObserver{T<:Real, F}
 
-Represents an interval observer for a nonlinear system.
+Take an observable nonlinear system 'sys' and an observer gain vector 'K' to create an interval observer object.
 
-An interval observer consists of a nonlinear system and a gain matrix K used in
-the observer error dynamics. The observer dynamics are:
+An interval observer consists of a pair:
 
-  ẋᴸ(t) = A*xᴸ(t) + f(t, y(t)) + K*(y(t) - C*xᴸ(t))
 
-where xᴸ is either the upper or lower state estimate.
+  ẋ⁺(t) = A*x(t) + f⁺(t, y(t)) + K*(y(t) - C*x⁻(t))
+  ẋ⁻(t) = A*x(t) + f⁻(t, y(t)) + K*(y(t) - C*x⁺(t))
+
+where x⁺ and x⁻ are the upper and lower state estimates respectively.
 
 # Fields
 - `sys::NonLinearSystem{T, F}`: The underlying nonlinear system

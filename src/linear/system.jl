@@ -7,7 +7,7 @@ using ControlSystems
 Represents a linear time-invariant system for interval observer design.
 
 A linear system is defined by:
-  ẋ(t) = A*x(t)
+  ẋ(t) = A*x(t) \\
   y(t) = C*x(t)
 
 where:
